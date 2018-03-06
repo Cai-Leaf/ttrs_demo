@@ -1,6 +1,6 @@
 from ttrs.data_connect.db_data import *
 import pandas as pd
-from ttrs.course_recommender_system.data_center import *
+from ttrs.rs_course.data_center import *
 
 # userid_courselist = """SELECT user_info.userid AS userid, course_list
 #                         FROM user_info JOIN (

@@ -1,4 +1,4 @@
-from ttrs.course_recommender_system.recommender import *
+from ttrs.rs_course.recommender import *
 import time
 
 start = time.time()
