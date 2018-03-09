@@ -13,4 +13,4 @@ DATABASE = 'tt_data'
 # 字符编码
 CHARSET = 'utf8'
 # 存入数据库时，数据分区大小
-MAX_SAVE_DATA_BACH_SIZE = 1024*128
+MAX_SAVE_DATA_BACH_SIZE = 1024*16

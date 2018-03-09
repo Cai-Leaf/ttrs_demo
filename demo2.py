@@ -1,6 +1,8 @@
-from ttrs.data_connect.db_data import *
+from ttrs.utils.db_data import *
+from ttrs.utils.process_shower import *
 import pandas as pd
-from ttrs.rs_course.data_center import *
+from ttrs.recommend_ourse.data_center import *
+from collections import defaultdict
 
 # userid_courselist = """SELECT user_info.userid AS userid, course_list
 #                         FROM user_info JOIN (
@@ -17,7 +19,16 @@ from ttrs.rs_course.data_center import *
 # aaa = [[i for i in item] for item in data.itertuples(index=False)]
 # print(aaa)
 
-data_manager = CourseDataManager()
-data_manager.load_user_course_score()
-data_manager.load_user_info()
-data_manager.load_user_course_list()
+# data_manager = CourseDataManager()
+# data_manager.load_user_course_score()
+# data_manager.load_user_info()
+# data_manager.load_user_course_list()
+userid_courselist = """SELECT {user_info}.userid AS userid, course_list
+                        FROM {user_info} JOIN (
+                            SELECT projectid, activiesid, GROUP_CONCAT(courseid SEPARATOR '-') AS course_list
+                            FROM {project_activies_course}
+                            GROUP BY projectid, activiesid
+                        ) AS t1 ON {user_info}.projectid = t1.projectid AND {user_info}.activiesid = t1.activiesid"""\
+    .format(user_info='tttttt', project_activies_course='dddddd')
+print(userid_courselist)
+
