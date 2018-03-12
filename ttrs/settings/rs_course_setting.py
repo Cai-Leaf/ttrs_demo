@@ -32,7 +32,7 @@ STAY_OPEN_COURSE_TABLE = 'stay_recommend_open_course'
 USER_INFO_TABLE = 'user_info'
 
 # 表2.用户课程信息表
-USER_COURSE_INFO_TABLE = 'user_course_info'
+USER_COURSE_INFO_TABLE = 'ts502'
 
 # 表6.项目—学习任务—选修课列表
 PROJECT_ACTIVISE_COURSE = 'project_activies_course'
@@ -40,40 +40,14 @@ PROJECT_ACTIVISE_COURSE = 'project_activies_course'
 
 # SQL语句 ----------------------------------------------------
 # 用户ID-课程ID-评分
-userid_courseid_score_sql = """SELECT userid, courseid, (is_select+(browse_time/600)*4) AS score
-                               FROM (
-                                    SELECT t1.userid AS userid, t1.courseid AS courseid, IFNULL(is_select,1) AS is_select, IF(ISNULL(browse_time),0,IF(browse_time>600,600,browse_time)) AS browse_time
+userid_courseid_score_sql = """SELECT userid, courseid, projectid, (1+(browse_time/600)*4) AS score
                                     FROM (
-                                    (
-                                        SELECT userid, courseid
-                                        FROM user_cource_select
-                                        WHERE courseid IN (
-                                            SELECT courseid
-                                            FROM course
-                                        )
-                                    )
-                                    UNION
-                                    (
-                                        SELECT userid, courseid
-                                        FROM user_course_browse
-                                        WHERE courseid IN (
-                                            SELECT courseid
-                                            FROM course
-                                        )
-                                    )) AS t1
-                                    LEFT JOIN (
-                                        SELECT userid, courseid, @tmp:=1 AS is_select
-                                        FROM user_cource_select
-                            
-                                    ) AS t2 ON t1.userid = t2.userid AND t1.courseid = t2.courseid
-                                    LEFT JOIN (
-                                        SELECT userid, courseid, browse_time/browse_count AS browse_time
-                                        FROM user_course_browse
-                            
-                                    ) AS t3 ON t1.userid = t3.userid AND t1.courseid = t3.courseid) AS t"""
+                                    SELECT userid, courseid, projectid, IF(ISNULL(browse_time), 0, IF(browse_time/browse_count>600,600,browse_time/browse_count)) AS browse_time
+                                    FROM {user_course_info}) as t"""\
+    .format(user_course_info=USER_COURSE_INFO_TABLE)
 
 # 用户ID-课程列表
-userid_courselist = """SELECT {user_info}.userid AS userid, course_list
+userid_courselist = """SELECT {user_info}.userid AS userid, {user_info}.projectid AS projectid, course_list
                         FROM {user_info} JOIN (
                             SELECT projectid, activiesid, GROUP_CONCAT(courseid SEPARATOR '-') AS course_list
                             FROM {project_activies_course}

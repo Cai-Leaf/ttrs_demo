@@ -23,12 +23,5 @@ from collections import defaultdict
 # data_manager.load_user_course_score()
 # data_manager.load_user_info()
 # data_manager.load_user_course_list()
-userid_courselist = """SELECT {user_info}.userid AS userid, course_list
-                        FROM {user_info} JOIN (
-                            SELECT projectid, activiesid, GROUP_CONCAT(courseid SEPARATOR '-') AS course_list
-                            FROM {project_activies_course}
-                            GROUP BY projectid, activiesid
-                        ) AS t1 ON {user_info}.projectid = t1.projectid AND {user_info}.activiesid = t1.activiesid"""\
-    .format(user_info='tttttt', project_activies_course='dddddd')
-print(userid_courselist)
+
 

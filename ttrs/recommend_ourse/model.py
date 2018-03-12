@@ -20,20 +20,20 @@ class UserCourseSVD:
     def predict(self, user_course, rec_n, pre_type='quick'):
         result = []
         if pre_type == 'quick':
-            for uid, candidate_list in user_course:
+            for uid, projectid, candidate_list in user_course:
                 in_uid = self.__model.trainset.to_inner_uid(uid)
                 in_iid = [self.__model.trainset.to_inner_iid(course) for course in candidate_list]
                 score = self.__model.trainset.global_mean + self.__model.bu[in_uid] + self.__model.bi[in_iid] + \
                         np.dot(self.__model.pu[in_uid], self.__model.qi[in_iid].T)
                 score = heapq.nlargest(rec_n, [(candidate_list[score_i], score[score_i]) for score_i in range(len(score))],
                                        key=lambda k: k[1])
-                result.append((uid, score))
+                result.append((uid, projectid, score))
             return result
         else:
-            for uid, candidate_list in user_course:
+            for uid, projectid, candidate_list in user_course:
                 score = [(iid, self.__model.predict(uid, iid).est) for iid in candidate_list]
                 score = heapq.nlargest(rec_n, score, key=lambda k: k[1])
-                result.append((uid, score))
+                result.append((uid, projectid, score))
             return result
 
 
@@ -55,36 +55,52 @@ class UserOpenCourseCold:
                 cur_node = cur_node.next[user_msg[2]]
                 cur_node.content[iid][0] += r
                 cur_node.content[iid][1] += 1
-        # 取各用户各类别中，平均分前的课程N
+        # 取各用户各类别中，平均分前的课程N, 并重构node节点的内容
         for _, node in self.__class_course_list.items():
             tmp_list = [(iid, s_n[0] / s_n[1]) for iid, s_n in node.content.items()]
-            node.content = heapq.nlargest(RECOMMEND_OPEN_COURSE_NUM, tmp_list, key=lambda k: k[1])
+            node.content = defaultdict(lambda: 0)
+            for iid, score in tmp_list:
+                node.content[iid] = score
+            # 进入第二层树结构
             for _, node2 in node.next.items():
                 tmp_list = [(iid, s_n[0] / s_n[1]) for iid, s_n in node2.content.items()]
-                node2.content = heapq.nlargest(RECOMMEND_OPEN_COURSE_NUM, tmp_list, key=lambda k: k[1])
+                node2.content = defaultdict(lambda: 0)
+                for iid, score in tmp_list:
+                    node2.content[iid] = score
+                # 进入第三层树结构
                 for _, node3 in node2.next.items():
                     tmp_list = [(iid, s_n[0] / s_n[1]) for iid, s_n in node3.content.items()]
-                    node3.content = heapq.nlargest(RECOMMEND_OPEN_COURSE_NUM, tmp_list, key=lambda k: k[1])
+                    node3.content = defaultdict(lambda: 0)
+                    for iid, score in tmp_list:
+                        node3.content[iid] = score
 
     def predict(self, user_info):
         result = []
-        for uid, class_name in user_info:
-            result.append((uid, self.estimate(class_name)))
+        for uid, projectid, class_name, candidate_list in user_info:
+            result.append((uid, projectid, self.estimate(class_name, candidate_list)))
         return result
 
-    def estimate(self, class_name):
+    def estimate(self, class_name, candidate_list):
         user_msg = class_name.split('-')
-        result = []
+        # 取树的父节点到叶子节点
         cur_node = self.__class_course_list[user_msg[0]]
-        result.append(cur_node.content)
+        course_score_0 = cur_node.content
         cur_node = cur_node.next[user_msg[1]]
-        result.append(cur_node.content)
+        course_score_1 = cur_node.content
         cur_node = cur_node.next[user_msg[2]]
-        result.append(cur_node.content)
-        for i in range(len(result) - 1, -1, -1):
-            if len(result[i]) == RECOMMEND_OPEN_COURSE_NUM:
-                return result[i]
-        return result[0]
+        course_score_2 = cur_node.content
+        # 获取课程分数
+        result = []
+        for iid in candidate_list:
+            if iid in course_score_2:
+                result.append((iid, course_score_2[iid]))
+                continue
+            if iid in course_score_1:
+                result.append((iid, course_score_1[iid]))
+                continue
+            result.append((iid, course_score_0[iid]))
+        result = heapq.nlargest(RECOMMEND_OPEN_COURSE_NUM, result, key=lambda k: k[1])
+        return result
 
 
 class ClassCourseNode:
@@ -111,10 +127,10 @@ class UserElectiveCourseCold:
 
     def predict(self, user_course):
         result = []
-        for uid, candidate_list in user_course:
+        for uid, projectid, candidate_list in user_course:
             score = [(iid, self.__course_score.get(iid, 2.5)) for iid in candidate_list]
             score = heapq.nlargest(RECOMMEND_COURSE_NUM, score, key=lambda k: k[1])
-            result.append((uid, score))
+            result.append((uid, projectid, score))
         return result
 
 
