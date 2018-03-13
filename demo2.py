@@ -1,7 +1,7 @@
 from ttrs.utils.db_data import *
 from ttrs.utils.process_shower import *
 import pandas as pd
-from ttrs.recommend_ourse.data_center import *
+from ttrs.recommend_course.data_center import *
 from collections import defaultdict
 
 # userid_courselist = """SELECT user_info.userid AS userid, course_list

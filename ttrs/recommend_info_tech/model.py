@@ -7,8 +7,8 @@ from math import exp
 
 
 class MixedCollaborativeFiltering:
-    def __init__(self, n_neighbor):
-        self.n_neighbor = n_neighbor
+    def __init__(self):
+        self.n_neighbor = 10
         self.inner_uid = None
         self.inner_iid = None
         self.user_itemlist = None
@@ -45,11 +45,13 @@ class MixedCollaborativeFiltering:
         self.content_sim = cosine_similarity(tfidf)
         return
 
-    def predict(self, user_itemlist):
+    def predict(self, user_itemlist, item_score):
         result = []
         for uid, candidate_list in user_itemlist:
             score = [(iid, self.estimate(uid, iid)) for iid in candidate_list]
             score = heapq.nlargest(20, score, key=lambda k: k[1])
+            # 根据推荐度进行排序
+            score = sorted([(iid, item_score[iid]) for iid, _ in score], key=lambda k: k[1], reverse=True)
             result.append((uid, score))
         return result
 
@@ -104,3 +106,63 @@ class MixedCollaborativeFiltering:
             self.item_content[self.inner_iid[ciid]] = content
         return
 
+
+class InfoTechColdModel:
+    def __init__(self):
+        self.__class_item_list = None
+        self.__default_result = None
+        return
+
+    def fit(self, ui_data, user_info):
+        # 统计各用户类别中课程的总分及总评分次数
+        item_count = defaultdict(int)
+        for uid, iid in ui_data[['userid', 'courseid']].itertuples(index=False):
+            if uid in user_info:
+                item_count[iid] += 1
+                user_msg = user_info[uid].split('-')
+                cur_node = self.__class_item_list[user_msg[0]]
+                cur_node.content[iid] += 1
+                cur_node = cur_node.next[user_msg[1]]
+                cur_node.content[iid] += 1
+                cur_node = cur_node.next[user_msg[2]]
+                cur_node.content[iid] += 1
+        # 取各用户各类别中，平均分前的课程N, 并重构node节点的内容
+        self.__default_result = heapq.nlargest(10, item_count.items(), key=lambda k: k[1])
+        for _, node in self.__class_item_list.items():
+            node.content = heapq.nlargest(10, node.content.items(), key=lambda k: k[1])
+            # 进入第二层树结构
+            for _, node2 in node.next.items():
+                node2.content = heapq.nlargest(10, node2.content.items(), key=lambda k: k[1])
+                # 进入第三层树结构
+                for _, node3 in node2.next.items():
+                    node3.content = heapq.nlargest(10, node3.content.items(), key=lambda k: k[1])
+        return
+
+    def predict(self, data):
+        result = []
+        for uid, class_name in data:
+            result.append((uid, self.estimate(class_name)))
+        return result
+
+    def estimate(self, class_name):
+        user_msg = class_name.split('-')
+        # 取树的父节点到叶子节点
+        content = []
+        cur_node = self.__class_item_list[user_msg[0]]
+        content.append(cur_node.content)
+        cur_node = cur_node.next[user_msg[1]]
+        content.append(cur_node.content)
+        cur_node = cur_node.next[user_msg[2]]
+        content.append(cur_node.content)
+        # 获取课程分数
+        for result in content[::-1]:
+            if len(result) == 10:
+                return result
+        return self.__default_result
+
+
+class ClassItemNode:
+    def __init__(self):
+        self.content = defaultdict(int)
+        self.next = defaultdict(lambda: ClassItemNode())
+        return

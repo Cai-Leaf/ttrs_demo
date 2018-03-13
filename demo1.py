@@ -1,4 +1,4 @@
-from ttrs.recommend_ourse.recommender import *
+from ttrs.recommend_course.recommender import *
 
 recommender = CourseRecommender()
 recommender.run()
