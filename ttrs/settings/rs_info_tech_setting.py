@@ -8,44 +8,68 @@ VERBOSE = True
 
 # 推荐物品数
 RECOMMEND_NUM = 10
+# 推荐新物品数
+RECOMMEND_NEW_NUM = 3
 
-# 推荐度的最大值和最小值
+# 推荐结果中推荐度的最大值和最小值
 MAX_SCORE = 100
 MIN_SCORE = 80
 
+# 推荐指数的参数
+# 下载次数
+MAX_DOWNLOAD_COUNT = 10
+DOWNLOAD_COUNT_WEIGHT = 0.3
+# 浏览次数
+MAX_BROWSE_COUNT = 10
+BROWSE_COUNT_WEIGHT = 0.3
+# 评星等级
+STAR_WEIGHT = 0.4
+
 # 保存选修课推荐结果的数据库表名
-RESULT_TABLE = 'recommend_optional_course'
-ALLDATA_TABLE = 'alldata_recommend_optional_course'
-STAY_TABLE = 'stay_recommend_optional_course'
+RESULT_TABLE = 'recommend_infor_tech'
+ALLDATA_TABLE = 'alldata_recommend_infor_tech'
+STAY_TABLE = 'stay_recommend_infor_tech'
 
 # 读取数据时需要用到的数据库表名 -----------------------------
-# 表1.用户信息表
-USER_INFO_TABLE = 'user_info'
+# 用户，物品浏览和下载记录表
+USER_ITEM_BD_TABLE = 'ts508'
 
-# 表2.用户课程信息表
-USER_COURSE_INFO_TABLE = 'ts502'
+# 用户信息表
+USER_INFO_TABLE = 'ts501'
 
-# 表6.项目—学习任务—选修课列表
-PROJECT_ACTIVISE_COURSE = 'project_activies_course'
+# 信息技巧大全信息表
+INFO_TECH_MSG_TABLE = 'ts507'
 
 
 # SQL语句 ----------------------------------------------------
-# 用户ID-课程ID-评分
-userid_courseid_score_sql = """SELECT userid, courseid, projectid, (1+(browse_time/600)*4) AS score
-                                    FROM (
-                                    SELECT userid, courseid, projectid, IF(ISNULL(browse_time), 0, IF(browse_time/browse_count>600,600,browse_time/browse_count)) AS browse_time
-                                    FROM {user_course_info}) as t"""\
-    .format(user_course_info=USER_COURSE_INFO_TABLE)
+# 用户ID-物品ID
+user_item_data_sql = """SELECT userid, resourceid
+                        FROM {user_item_bd_table}
+                        GROUP BY userid, resourceid"""\
+    .format(user_item_bd_table=USER_ITEM_BD_TABLE)
 
-# 用户ID-课程列表
-userid_courselist = """SELECT {user_info}.userid AS userid, {user_info}.projectid AS projectid, course_list
-                        FROM {user_info} JOIN (
-                            SELECT projectid, activiesid, GROUP_CONCAT(courseid SEPARATOR '-') AS course_list
-                            FROM {project_activies_course}
-                            GROUP BY projectid, activiesid
-                        ) AS t1 ON {user_info}.projectid = t1.projectid AND {user_info}.activiesid = t1.activiesid"""\
-    .format(user_info=USER_INFO_TABLE, project_activies_course=PROJECT_ACTIVISE_COURSE)
+# 物品ID-内容
+item_msg_sql = """SELECT shareid, key_type FROM {info_tech_msg_table}""".format(info_tech_msg_table=INFO_TECH_MSG_TABLE)
+
 
 # 用户信息
-user_info = """SELECT userid, projectid, age, gender, schoolstagecode, subjectcode FROM {user_info}"""\
+user_info_sql = """SELECT userid, projectid, age, gender, schoolstagecode, subjectcode FROM {user_info}"""\
     .format(user_info=USER_INFO_TABLE)
+
+# 物品ID-推荐度
+item_score_sql = """SELECT shareid, ({download_weight}*t.d/{max_download_count}+{browse_weight}*t.b/{max_browse_count}+{star_weight}*t.s/5) AS score
+                    FROM (
+                    SELECT shareid, 
+                    IF(downloadcount > {max_download_count}, {max_download_count}, downloadcount) AS d, 
+                    IF(browsecount > {max_browse_count}, {max_browse_count}, browsecount) AS b,  
+                    IF(star > 5, 5, star) AS s
+                    FROM {info_tech_msg_table}) AS t"""\
+    .format(info_tech_msg_table=INFO_TECH_MSG_TABLE,
+            max_download_count=MAX_DOWNLOAD_COUNT, download_weight=DOWNLOAD_COUNT_WEIGHT,
+            max_browse_count=MAX_BROWSE_COUNT, browse_weight=BROWSE_COUNT_WEIGHT,
+            star_weight=STAR_WEIGHT)
+
+# 新物品ID
+new_item_id_sql = """SELECT shareid
+                     FROM {info_tech_msg_table}
+                     WHERE createtime > "2015-05-22" """.format(info_tech_msg_table=INFO_TECH_MSG_TABLE)

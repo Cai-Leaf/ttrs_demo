@@ -1,7 +1,7 @@
-import numpy as np
 from ..utils.process_shower import ProcessShower
 from .data_center import InfoTechDataManager
 from .model import *
+from ..settings.rs_info_tech_setting import VERBOSE
 
 
 class InfoTechRecommender:
@@ -11,7 +11,7 @@ class InfoTechRecommender:
     def run(self):
         # 初始化组件
         data_manager = InfoTechDataManager()
-        process_shower = ProcessShower('信息技术技巧大全推荐系统', True)
+        process_shower = ProcessShower('信息技术技巧大全推荐系统', VERBOSE)
         process_shower.show_start()
 
         # 训练预测模型
@@ -30,11 +30,16 @@ class InfoTechRecommender:
         pre_result = model.predict(pre_data, item_score)
         process_shower.show_end_subprocess()
 
-        # 预测冷启动用户信息技术技巧大全评分
-        process_shower.show_start_subprocess('预测冷启动用户信息技术技巧大全评分')
+        # 训练冷启动用户预测模型
+        process_shower.show_start_subprocess('训练冷启动用户预测模型')
         cold_model = InfoTechColdModel()
         user_info = data_manager.get_user_info()
-        cold_model.fit(user_item_data, user_info)
+        cold_train_data = data_manager.get_cold_train_data()
+        cold_model.fit(cold_train_data, user_info)
+        process_shower.show_end_subprocess()
+
+        # 预测冷启动用户信息技术技巧大全评分
+        process_shower.show_start_subprocess('预测冷启动用户信息技术技巧大全评分')
         cold_pre_data = data_manager.get_cold_pre_data()
         cold_pre_result = cold_model.predict(cold_pre_data)
         process_shower.show_end_subprocess()

@@ -4,6 +4,8 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import heapq
 from math import exp
+import random
+from ..settings.rs_info_tech_setting import RECOMMEND_NUM, RECOMMEND_NEW_NUM
 
 
 class MixedCollaborativeFiltering:
@@ -47,11 +49,17 @@ class MixedCollaborativeFiltering:
 
     def predict(self, user_itemlist, item_score):
         result = []
-        for uid, candidate_list in user_itemlist:
+        for uid, candidate_list, new_item_list in user_itemlist:
             score = [(iid, self.estimate(uid, iid)) for iid in candidate_list]
-            score = heapq.nlargest(20, score, key=lambda k: k[1])
+            score = heapq.nlargest(RECOMMEND_NUM, score, key=lambda k: k[1])
+            new_score = [(iid, self.estimate_use_content_sim(uid, iid)) for iid in new_item_list]
+            new_score = heapq.nlargest(RECOMMEND_NEW_NUM, new_score, key=lambda k: k[1])
             # 根据推荐度进行排序
             score = sorted([(iid, item_score[iid]) for iid, _ in score], key=lambda k: k[1], reverse=True)
+            # 将新物品随机插入推荐列表1/3到2/3的位置
+            for new_item in new_score:
+                index = random.randint(len(score)//3, len(score)//3*2)
+                score.insert(index, new_item)
             result.append((uid, score))
         return result
 
@@ -69,6 +77,19 @@ class MixedCollaborativeFiltering:
         # 取相似度最高的前n个值
         neighbor_sim = heapq.nlargest(self.n_neighbor, neighbor_sim)
         est = np.sum(neighbor_sim)/i_n
+        return est
+
+    def estimate_use_content_sim(self, u, i):
+        try:
+            uid = self.inner_uid[u]
+            iid = self.inner_iid[i]
+        except KeyError:
+            return 0
+        i_n = len(self.user_itemlist[uid])
+        uid_list = self.user_itemlist[uid]
+        neighbor_sim = self.content_sim[iid][uid_list]
+        neighbor_sim = heapq.nlargest(self.n_neighbor, neighbor_sim)
+        est = np.sum(neighbor_sim) / i_n
         return est
 
     def construct_train_data(self, ui_data, i_msg_data):
@@ -114,9 +135,10 @@ class InfoTechColdModel:
         return
 
     def fit(self, ui_data, user_info):
-        # 统计各用户类别中课程的总分及总评分次数
+        # 统计各用户类别中物品的总分及总评分次数
         item_count = defaultdict(int)
-        for uid, iid in ui_data[['userid', 'courseid']].itertuples(index=False):
+        self.__class_item_list = defaultdict(lambda: ClassItemNode())
+        for uid, iid in ui_data[['userid', 'itemid']].itertuples(index=False):
             if uid in user_info:
                 item_count[iid] += 1
                 user_msg = user_info[uid].split('-')
@@ -126,22 +148,37 @@ class InfoTechColdModel:
                 cur_node.content[iid] += 1
                 cur_node = cur_node.next[user_msg[2]]
                 cur_node.content[iid] += 1
-        # 取各用户各类别中，平均分前的课程N, 并重构node节点的内容
-        self.__default_result = heapq.nlargest(10, item_count.items(), key=lambda k: k[1])
+        # 取各用户各类别中，点击次数前n的物品
+        self.__default_result = heapq.nlargest(RECOMMEND_NUM, item_count.items(), key=lambda k: k[1])
         for _, node in self.__class_item_list.items():
-            node.content = heapq.nlargest(10, node.content.items(), key=lambda k: k[1])
+            node.content = heapq.nlargest(RECOMMEND_NUM, node.content.items(), key=lambda k: k[1])
             # 进入第二层树结构
             for _, node2 in node.next.items():
-                node2.content = heapq.nlargest(10, node2.content.items(), key=lambda k: k[1])
+                node2.content = heapq.nlargest(RECOMMEND_NUM, node2.content.items(), key=lambda k: k[1])
                 # 进入第三层树结构
                 for _, node3 in node2.next.items():
-                    node3.content = heapq.nlargest(10, node3.content.items(), key=lambda k: k[1])
+                    node3.content = heapq.nlargest(RECOMMEND_NUM, node3.content.items(), key=lambda k: k[1])
+
+        # for name, node in self.__class_item_list.items():
+        #     print(name, len(node.content))
+        #     # 进入第二层树结构
+        #     for name2, node2 in node.next.items():
+        #         print(name, name2, len(node2.content))
+        #         # 进入第三层树结构
+        #         for name3, node3 in node2.next.items():
+        #             print(name, name2, name3, len(node3.content))
+
         return
 
     def predict(self, data):
         result = []
-        for uid, class_name in data:
-            result.append((uid, self.estimate(class_name)))
+        for uid, class_name, new_item_list in data:
+            tmp_result = self.estimate(class_name)
+            # 将新物品随机插入推荐列表1/3到2/3的位置
+            for new_item in new_item_list:
+                index = random.randint(len(tmp_result) // 3, len(tmp_result) // 3 * 2)
+                tmp_result.insert(index, (new_item, 0))
+            result.append((uid, tmp_result))
         return result
 
     def estimate(self, class_name):
@@ -156,9 +193,9 @@ class InfoTechColdModel:
         content.append(cur_node.content)
         # 获取课程分数
         for result in content[::-1]:
-            if len(result) == 10:
+            if len(result) == RECOMMEND_NUM:
                 return result
-        return self.__default_result
+        return self.__default_result.copy()
 
 
 class ClassItemNode:
