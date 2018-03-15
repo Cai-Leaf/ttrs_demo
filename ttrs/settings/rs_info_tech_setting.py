@@ -15,6 +15,9 @@ RECOMMEND_NEW_NUM = 3
 MAX_SCORE = 100
 MIN_SCORE = 80
 
+# 设置距今几天的物品为新物品
+DAY_NUM = 30
+
 # 推荐指数的参数
 # 下载次数
 MAX_DOWNLOAD_COUNT = 10
@@ -70,6 +73,9 @@ item_score_sql = """SELECT shareid, ({download_weight}*t.d/{max_download_count}+
             star_weight=STAR_WEIGHT)
 
 # 新物品ID
+import datetime
+new_date = datetime.datetime.now() + datetime.timedelta(days=-DAY_NUM)
+new_date = '"' + new_date.strftime('%Y-%m-%d') + '"'
 new_item_id_sql = """SELECT shareid
                      FROM {info_tech_msg_table}
-                     WHERE createtime > "2015-05-22" """.format(info_tech_msg_table=INFO_TECH_MSG_TABLE)
+                     WHERE createtime > {date} """.format(info_tech_msg_table=INFO_TECH_MSG_TABLE, date=new_date)

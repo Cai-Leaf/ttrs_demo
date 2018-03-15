@@ -5,6 +5,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import random
 
-
-b = {1, 4, 5, 6}
-print(random.sample(b, 6))
+a = 30
+now_time = datetime.datetime.now()
+yes_time = now_time + datetime.timedelta(days=-a)
+print('"' + yes_time.strftime('%Y-%m-%d') + '"')

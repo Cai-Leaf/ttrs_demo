@@ -29,30 +29,30 @@ STAY_OPEN_COURSE_TABLE = 'stay_recommend_open_course'
 
 # 读取数据时需要用到的数据库表名 -----------------------------
 # 表1.用户信息表
-USER_INFO_TABLE = 'user_info'
+USER_INFO_TABLE = 'ts501'
 
 # 表2.用户课程信息表
 USER_COURSE_INFO_TABLE = 'ts502'
 
 # 表6.项目—学习任务—选修课列表
-PROJECT_ACTIVISE_COURSE = 'project_activies_course'
+PROJECT_ACTIVISE_COURSE = 'ts504'
 
 
 # SQL语句 ----------------------------------------------------
 # 用户ID-课程ID-评分
 userid_courseid_score_sql = """SELECT userid, courseid, projectid, (1+(browse_time/600)*4) AS score
-                                    FROM (
-                                    SELECT userid, courseid, projectid, IF(ISNULL(browse_time), 0, IF(browse_time/browse_count>600,600,browse_time/browse_count)) AS browse_time
-                                    FROM {user_course_info}) as t"""\
+                               FROM (
+                               SELECT userid, courseid, projectid, IF(pv=0, 0, IF(duration/pv>600,600,duration/pv)) AS browse_time
+                               FROM {user_course_info}) as t"""\
     .format(user_course_info=USER_COURSE_INFO_TABLE)
 
 # 用户ID-课程列表
-userid_courselist = """SELECT {user_info}.userid AS userid, {user_info}.projectid AS projectid, course_list
-                        FROM {user_info} JOIN (
-                            SELECT projectid, activiesid, GROUP_CONCAT(courseid SEPARATOR '-') AS course_list
-                            FROM {project_activies_course}
-                            GROUP BY projectid, activiesid
-                        ) AS t1 ON {user_info}.projectid = t1.projectid AND {user_info}.activiesid = t1.activiesid"""\
+userid_courselist = """SELECT userid, projectid, course_list
+                       FROM {project_activies_course}
+                       WHERE userid in (
+                           SELECT DISTINCT userid
+                           FROM {user_info}
+                       )"""\
     .format(user_info=USER_INFO_TABLE, project_activies_course=PROJECT_ACTIVISE_COURSE)
 
 # 用户信息
