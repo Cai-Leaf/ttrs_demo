@@ -1,6 +1,5 @@
 from surprise import SVD
 from surprise import Dataset, Reader
-import time
 import numpy as np
 import heapq
 from ..settings.rs_course_setting import *
@@ -9,7 +8,8 @@ from collections import defaultdict
 
 class UserCourseSVD:
     def __init__(self):
-        self.__model = SVD(n_factors=100, n_epochs=1)
+        # n_factors = 32, n_epochs = 20
+        self.__model = SVD(n_factors=32, n_epochs=1)
 
     def fit(self, user_course_score):
         reader = Reader(rating_scale=(1, 5))

@@ -34,13 +34,13 @@ ALLDATA_TABLE = 'alldata_recommend_infor_tech'
 STAY_TABLE = 'stay_recommend_infor_tech'
 
 # 读取数据时需要用到的数据库表名 -----------------------------
-# 用户，物品浏览和下载记录表
+# 用户—信息技术技巧浏览
 USER_ITEM_BD_TABLE = 'ts508'
 
-# 用户信息表
+# 项目-用户信息表
 USER_INFO_TABLE = 'ts501'
 
-# 信息技巧大全信息表
+# 信息技术技巧大全信息表
 INFO_TECH_MSG_TABLE = 'ts507'
 
 

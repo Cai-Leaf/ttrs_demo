@@ -37,7 +37,7 @@ class CourseRecommender:
 
         # 保存选修课推荐结果
         process_shower.show_start_subprocess('保存选修课推荐结果')
-        data_manager.save_to_db(elective_course_result+cold_elective_course_result, data_type='elective_course_data')
+        data_manager.save_elective_course_data_to_db(elective_course_result+cold_elective_course_result)
         del elective_course_result, cold_elective_course_result, cold_elective_course_pre_data
         process_shower.show_end_subprocess()
 
@@ -58,7 +58,7 @@ class CourseRecommender:
 
         # 保存开放课推荐结果
         process_shower.show_start_subprocess('保存开放课推荐结果')
-        data_manager.save_to_db(open_course_result + cold_open_course_result, data_type='open_course_data')
+        data_manager.save_open_course_data_to_db(open_course_result + cold_open_course_result)
         process_shower.show_end_subprocess()
 
         process_shower.show_end()

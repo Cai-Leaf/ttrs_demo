@@ -24,4 +24,6 @@ from collections import defaultdict
 # data_manager.load_user_info()
 # data_manager.load_user_course_list()
 
+aaa = get_time_from_db('alldata_recommend_open_course', 'dt')
+print(aaa)
 

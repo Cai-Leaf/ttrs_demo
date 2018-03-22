@@ -1,9 +1,11 @@
 from ttrs.recommend_course.recommender import *
 from ttrs.recommend_info_tech.recommender import *
 
-# recommender = CourseRecommender()
-# recommender.run()
+# 运行课程推荐系统
+recommender = CourseRecommender()
+recommender.run()
 
+# 运行信息技术技巧大全推荐系统
 recommender = InfoTechRecommender()
 recommender.run()
 

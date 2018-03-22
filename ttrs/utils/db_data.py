@@ -1,3 +1,5 @@
+import datetime
+
 import MySQLdb
 import pandas as pd
 from ..settings.db_setting import *
@@ -17,15 +19,39 @@ def read_db_to_df(sql, contain, info='', verbose=True):
         db_data = cursor.fetchall()
         result = pd.DataFrame(list(db_data), columns=contain)
     except AssertionError:
-        raise AssertionError('构造Dataframe时出错')
+        raise AssertionError(info, '构造Dataframe时出错')
     except:
-        raise IOError('读取数据库出错')
+        raise IOError(info, '读取数据库出错')
     # 关闭数据库连接
     db.close()
     if verbose:
         print(info, '数据读取完毕，用时',
               int((time.time() - start) // 60), '分',
               int((time.time() - start) % 60), '秒')
+    return result
+
+
+# 获取时间
+def get_time_from_db(table_name, colum_name, verbose=True):
+    db = MySQLdb.connect(host=R_HOST, user=R_USER, password=R_PASSWORD, database=R_DATABASE, charset=R_CHARSET)
+    cursor = db.cursor()
+    result = datetime.datetime.now().strftime('%Y-%m-%d')
+    try:
+        # 执行SQL语句
+        sql = 'SELECT {column} FROM {table} LIMIT 1'.format(table=table_name, column=colum_name)
+        cursor.execute(sql)
+        # 获取所有记录列表
+        db_data = cursor.fetchall()
+        if len(db_data) == 0:
+            raise Exception
+        result = db_data[0][0].strftime('%Y-%m-%d %H:%M:%S')
+        if verbose:
+            print('成功从', table_name, '读取时间')
+    except:
+        if verbose:
+            print('从', table_name, '读取时间出错，时间取当前时间')
+        # 关闭数据库连接
+    db.close()
     return result
 
 
@@ -57,7 +83,7 @@ def save_data_to_db(data, table_name, contain, is_truncate=False, verbose=True):
     except:
         # 回滚数据
         db.rollback()
-        raise IOError('写数据库出错')
+        raise IOError(table_name, '写数据库出错')
     finally:
         db.close()
     if verbose:
@@ -90,7 +116,7 @@ def delete_data_with_userid(uid_list, table_name, verbose=True):
     except:
         # 回滚数据
         db.rollback()
-        raise IOError('写数据库出错')
+        raise IOError(table_name, '删除数据库出错')
     finally:
         db.close()
     if verbose:

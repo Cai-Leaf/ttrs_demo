@@ -71,9 +71,9 @@ class MixedCollaborativeFiltering:
             return 0
         # 计算相似度，取物品相似度和内容相似度的混合相似度
         i_n = len(self.user_itemlist[uid])
-        uid_list = self.user_itemlist[uid]
+        iid_list = self.user_itemlist[uid]
         a = 1/(1+exp(-(i_n-5)))
-        neighbor_sim = a*self.sim[iid][uid_list]+(1-a)*self.content_sim[iid][uid_list]
+        neighbor_sim = a*self.sim[iid][iid_list]+(1-a)*self.content_sim[iid][iid_list]
         # 取相似度最高的前n个值
         neighbor_sim = heapq.nlargest(self.n_neighbor, neighbor_sim)
         est = np.sum(neighbor_sim)/i_n

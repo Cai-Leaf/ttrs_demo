@@ -12,6 +12,7 @@ class CourseDataManager:
         self.__user_info = None
         self.__user_course_list = None
         self.__user_projectid_list = None
+        self.__user_project_ac_id = None
         return
 
     # 加载(用户ID-课程ID-评分)数据
@@ -27,16 +28,17 @@ class CourseDataManager:
 
     # 加载(用户ID-选修课列表)数据
     def load_user_course_list(self):
-        if not self.__user_course_list:
-            # 需要设置mysql SET GLOBAL group_concat_max_len=1024*128;
+        if not self.__user_course_list or not self.__user_project_ac_id:
             # tmp_data = pd.read_csv("./data/user_course_list.csv", header=0)
             tmp_data = db_data.read_db_to_df(sql=rs_set.userid_courselist,
-                                             contain=['userid', 'projectid', 'course_list'],
+                                             contain=['userid', 'projectid', 'activiesid', 'course_package_id', 'course_list'],
                                              info=rs_set.USER_INFO_TABLE+' '+rs_set.PROJECT_ACTIVISE_COURSE,
                                              verbose=rs_set.VERBOSE)
             self.__user_course_list = []
-            for uid, projectid, course_list in tmp_data.itertuples(index=False):
+            self.__user_project_ac_id = defaultdict(lambda: "0-0")
+            for uid, projectid, activiesid, course_package_id, course_list in tmp_data.itertuples(index=False):
                 self.__user_course_list.append((uid, projectid, set([int(iid) for iid in course_list.split('-')])))
+                self.__user_project_ac_id[str(int(uid))+'-'+str(int(projectid))] = str(int(activiesid))+'-'+str(int(course_package_id))
 
     # 加载(用户信息)数据，处理成(用户ID-用户类型)
     def load_user_info(self):
@@ -151,21 +153,11 @@ class CourseDataManager:
                         cold_open_course_pre_data.append((uid, projectid, class_name, candidate_list))
         return cold_open_course_pre_data
 
-    # 推荐结果保存到数据库
-    def save_to_db(self, data, data_type):
+    # 保存开放课推荐结果到数据库
+    def save_open_course_data_to_db(self, data):
         if self.__user_info is None:
             self.load_user_info()
-        if data_type == 'elective_course_data':
-            table_name = rs_set.COURSE_TABLE
-            alldata_table_name = rs_set.ALLDATA_COURSE_TABLE
-            stay_table_name = rs_set.STAY_COURSE_TABLE
-        elif data_type == 'open_course_data':
-            table_name = rs_set.OPEN_COURSE_TABLE
-            alldata_table_name = rs_set.ALLDATA_OPEN_COURSE_TABLE
-            stay_table_name = rs_set.STAY_OPEN_COURSE_TABLE
-        else:
-            return
-        time = datetime.datetime.now().strftime('%Y-%m-%d')
+        time = db_data.get_time_from_db(table_name=rs_set.USER_COURSE_INFO_TABLE, colum_name='e_date')
         save_data = []
         uid_list = set()
         for uid, projectid, course_socre_list in data:
@@ -183,18 +175,54 @@ class CourseDataManager:
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=table_name, is_truncate=True)
+                                table_name=rs_set.OPEN_COURSE_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
         # 将数据保存到已完成项目推荐数据表
-        db_data.delete_data_with_userid(list(uid_list), stay_table_name)
+        db_data.delete_data_with_userid(list(uid_list),  rs_set.STAY_OPEN_COURSE_TABLE)
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=stay_table_name, is_truncate=False)
+                                table_name=rs_set.STAY_OPEN_COURSE_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         # 将数据保存到历史推荐数据表
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=alldata_table_name, is_truncate=False)
+                                table_name=rs_set.ALLDATA_OPEN_COURSE_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        return
+
+    # 保存选修课推荐结果到数据库
+    def save_elective_course_data_to_db(self, data):
+        if self.__user_project_ac_id is None:
+            self.load_user_course_list()
+        time = db_data.get_time_from_db(table_name=rs_set.USER_COURSE_INFO_TABLE, colum_name='e_date')
+        save_data = []
+        uid_list = set()
+        for uid, projectid, course_socre_list in data:
+            if len(course_socre_list) > 0:
+                uid_list.add(uid)
+                tmp_id = self.__user_project_ac_id[str(int(uid))+'-'+str(int(projectid))].split('-')
+                activiesid = tmp_id[0]
+                course_package_id = tmp_id[1]
+                max_score = max(course_socre_list, key=lambda k: k[1])[1]
+                min_score = min(course_socre_list, key=lambda k: k[1])[1]
+                for courseid, score in course_socre_list:
+                    save_data.append((uid, courseid, activiesid, course_package_id, projectid, time,
+                                      round((rs_set.MAX_SCORE-rs_set.MIN_SCORE)*(score-min_score)/(max_score - min_score+1e-10)+rs_set.MIN_SCORE)))
+        # 将数据保存到当周推荐数据表
+        db_data.save_data_to_db(save_data,
+                                contain=['userid', 'courseid', 'activiesid', 'course_package_id', 'projectid', 'dt',
+                                         'recommendation_index'],
+                                table_name=rs_set.COURSE_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
+        # 将数据保存到已完成项目推荐数据表
+        db_data.delete_data_with_userid(list(uid_list),  rs_set.STAY_COURSE_TABLE)
+        db_data.save_data_to_db(save_data,
+                                contain=['userid', 'courseid', 'activiesid', 'course_package_id', 'projectid', 'dt',
+                                         'recommendation_index'],
+                                table_name=rs_set.STAY_COURSE_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        # 将数据保存到历史推荐数据表
+        db_data.save_data_to_db(save_data,
+                                contain=['userid', 'courseid', 'activiesid', 'course_package_id', 'projectid', 'dt',
+                                         'recommendation_index'],
+                                table_name=rs_set.ALLDATA_COURSE_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         return
 
     # 根据用户有过选课及浏览记录的课程构造过滤表

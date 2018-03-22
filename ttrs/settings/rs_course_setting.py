@@ -28,13 +28,13 @@ ALLDATA_OPEN_COURSE_TABLE = 'alldata_recommend_open_course'
 STAY_OPEN_COURSE_TABLE = 'stay_recommend_open_course'
 
 # 读取数据时需要用到的数据库表名 -----------------------------
-# 表1.用户信息表
+# 项目-用户信息表
 USER_INFO_TABLE = 'ts501'
 
-# 表2.用户课程信息表
+# 课程—用户行为
 USER_COURSE_INFO_TABLE = 'ts502'
 
-# 表6.项目—学习任务—选修课列表
+# 学习任务—选修课列表
 PROJECT_ACTIVISE_COURSE = 'ts504'
 
 
@@ -47,7 +47,7 @@ userid_courseid_score_sql = """SELECT userid, courseid, projectid, (1+(browse_ti
     .format(user_course_info=USER_COURSE_INFO_TABLE)
 
 # 用户ID-课程列表
-userid_courselist = """SELECT userid, projectid, course_list
+userid_courselist = """SELECT userid, projectid, activiesid, course_package_id, course_list
                        FROM {project_activies_course}
                        WHERE userid in (
                            SELECT DISTINCT userid

@@ -152,12 +152,7 @@ class InfoTechDataManager:
     def save_to_db(self, data):
         if self.__user_info is None:
             self.load_user_info()
-
-        table_name = rs_set.RESULT_TABLE
-        alldata_table_name = rs_set.ALLDATA_TABLE
-        stay_table_name = rs_set.STAY_TABLE
-
-        time = datetime.datetime.now().strftime('%Y-%m-%d')
+        time = db_data.get_time_from_db(table_name=rs_set.USER_ITEM_BD_TABLE, colum_name='dt')
         save_data = []
         uid_list = set()
         for uid, item_list in data:
@@ -176,18 +171,18 @@ class InfoTechDataManager:
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=table_name, is_truncate=True)
+                                table_name=rs_set.RESULT_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
         # 将数据保存到已完成项目推荐数据表
-        db_data.delete_data_with_userid(list(uid_list), stay_table_name)
+        db_data.delete_data_with_userid(list(uid_list), rs_set.STAY_TABLE)
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=stay_table_name, is_truncate=False)
+                                table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         # 将数据保存到历史推荐数据表
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=alldata_table_name, is_truncate=False)
+                                table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         return
 
     def make_item_filter(self):
