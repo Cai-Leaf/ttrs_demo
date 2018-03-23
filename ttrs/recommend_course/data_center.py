@@ -244,7 +244,7 @@ class CourseDataManager:
         if self.__user_info is None:
             self.load_user_info()
         pid_class_course_list = defaultdict(set)
-        for uid, iid, projectid in self.__user_course_score[['userid', 'courseid', 'projectid']].itertuples(
+        for uid, pid, iid in self.__user_course_score[['userid', 'projectid', 'courseid']].itertuples(
                 index=False):
             if uid in self.__user_info:
                 user_msg = str(projectid) + '*' + self.__user_info[uid].split('-')[0]

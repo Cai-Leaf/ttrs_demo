@@ -6,7 +6,7 @@ from scipy import sparse, zeros
 import scipy
 import heapq
 import pandas as pd
-from ttrs.recommend_resource_share.model import UserCollaborativeFiltering
+from ttrs.recommend_resource_share.model import ItemCollaborativeFiltering
 from numpy.random import rand
 
 

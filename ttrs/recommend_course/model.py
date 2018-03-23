@@ -55,7 +55,7 @@ class UserOpenCourseCold:
                 cur_node = cur_node.next[user_msg[2]]
                 cur_node.content[iid][0] += r
                 cur_node.content[iid][1] += 1
-        # 取各用户各类别中，平均分前的课程N, 并重构node节点的内容
+        # 重构node节点的内容,将其表示为平均分
         for _, node in self.__class_course_list.items():
             tmp_list = [(iid, s_n[0] / s_n[1]) for iid, s_n in node.content.items()]
             node.content = defaultdict(lambda: 0)
