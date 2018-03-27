@@ -164,7 +164,7 @@ class InfoTechDataManager:
                 item_num = len(item_list)
                 for i in range(item_num-1, -1, -1):
                     iid = item_list[i][0]
-                    score = i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/(item_num-1)+rs_set.MIN_SCORE
+                    score = i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/(item_num-1+1e-4)+rs_set.MIN_SCORE
                     for projectid in self.__user_projectid_list[uid]:
                         save_data.append((uid, iid, sc, ssc, projectid, time, score))
         # 将数据保存到当周推荐数据表

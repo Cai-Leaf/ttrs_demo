@@ -1,4 +1,5 @@
 from ..utils.process_shower import *
+from ..settings.rs_study_activity_setting import VERBOSE
 from .data_center import *
 from .model import *
 
@@ -10,7 +11,7 @@ class StudyActivityRecommender:
     def run(self):
         # 初始化组件
         data_manager = StudyActivityDataManager()
-        process_shower = ProcessShower('研修活动推荐系统', True)
+        process_shower = ProcessShower('研修活动推荐系统', VERBOSE)
         process_shower.show_start()
 
         # 训练预测模型

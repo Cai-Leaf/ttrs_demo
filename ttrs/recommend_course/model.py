@@ -8,8 +8,7 @@ from collections import defaultdict
 
 class UserCourseSVD:
     def __init__(self):
-        # n_factors = 32, n_epochs = 20
-        self.__model = SVD(n_factors=32, n_epochs=1)
+        self.__model = SVD(n_factors=32, n_epochs=20)
 
     def fit(self, user_course_score):
         reader = Reader(rating_scale=(1, 5))
@@ -20,20 +19,20 @@ class UserCourseSVD:
     def predict(self, user_course, rec_n, pre_type='quick'):
         result = []
         if pre_type == 'quick':
-            for uid, projectid, candidate_list in user_course:
+            for uid, projectid, activiesid, course_package_id, candidate_list in user_course:
                 in_uid = self.__model.trainset.to_inner_uid(uid)
                 in_iid = [self.__model.trainset.to_inner_iid(course) for course in candidate_list]
                 score = self.__model.trainset.global_mean + self.__model.bu[in_uid] + self.__model.bi[in_iid] + \
                         np.dot(self.__model.pu[in_uid], self.__model.qi[in_iid].T)
                 score = heapq.nlargest(rec_n, [(candidate_list[score_i], score[score_i]) for score_i in range(len(score))],
                                        key=lambda k: k[1])
-                result.append((uid, projectid, score))
+                result.append((uid, projectid, activiesid, course_package_id, score))
             return result
         else:
-            for uid, projectid, candidate_list in user_course:
+            for uid, projectid, activiesid, course_package_id, candidate_list in user_course:
                 score = [(iid, self.__model.predict(uid, iid).est) for iid in candidate_list]
                 score = heapq.nlargest(rec_n, score, key=lambda k: k[1])
-                result.append((uid, projectid, score))
+                result.append((uid, projectid, activiesid, course_package_id, score))
             return result
 
 
@@ -77,7 +76,7 @@ class UserOpenCourseCold:
     def predict(self, user_info):
         result = []
         for uid, projectid, class_name, candidate_list in user_info:
-            result.append((uid, projectid, self.estimate(class_name, candidate_list)))
+            result.append((uid, projectid, "", "", self.estimate(class_name, candidate_list)))
         return result
 
     def estimate(self, class_name, candidate_list):
@@ -127,10 +126,10 @@ class UserElectiveCourseCold:
 
     def predict(self, user_course):
         result = []
-        for uid, projectid, candidate_list in user_course:
+        for uid, projectid, activiesid, course_package_id, candidate_list in user_course:
             score = [(iid, self.__course_score.get(iid, 2.5)) for iid in candidate_list]
             score = heapq.nlargest(RECOMMEND_COURSE_NUM, score, key=lambda k: k[1])
-            result.append((uid, projectid, score))
+            result.append((uid, projectid, activiesid, course_package_id, score))
         return result
 
 

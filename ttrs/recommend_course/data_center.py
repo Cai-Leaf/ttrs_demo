@@ -1,9 +1,6 @@
-import pandas as pd
 from ..utils import db_data
 from ..settings import rs_course_setting as rs_set
-import datetime
 from collections import defaultdict
-from ..settings.rs_course_setting import *
 
 
 class CourseDataManager:
@@ -12,7 +9,6 @@ class CourseDataManager:
         self.__user_info = None
         self.__user_course_list = None
         self.__user_projectid_list = None
-        self.__user_project_ac_id = None
         return
 
     # 加载(用户ID-课程ID-评分)数据
@@ -28,17 +24,16 @@ class CourseDataManager:
 
     # 加载(用户ID-选修课列表)数据
     def load_user_course_list(self):
-        if not self.__user_course_list or not self.__user_project_ac_id:
+        if not self.__user_course_list:
             # tmp_data = pd.read_csv("./data/user_course_list.csv", header=0)
             tmp_data = db_data.read_db_to_df(sql=rs_set.userid_courselist,
                                              contain=['userid', 'projectid', 'activiesid', 'course_package_id', 'course_list'],
                                              info=rs_set.USER_INFO_TABLE+' '+rs_set.PROJECT_ACTIVISE_COURSE,
                                              verbose=rs_set.VERBOSE)
             self.__user_course_list = []
-            self.__user_project_ac_id = defaultdict(lambda: "0-0")
             for uid, projectid, activiesid, course_package_id, course_list in tmp_data.itertuples(index=False):
-                self.__user_course_list.append((uid, projectid, set([int(iid) for iid in course_list.split('-')])))
-                self.__user_project_ac_id[str(int(uid))+'-'+str(int(projectid))] = str(int(activiesid))+'-'+str(int(course_package_id))
+                self.__user_course_list.append((uid, projectid, activiesid, course_package_id,
+                                                set([int(iid) for iid in course_list.split('-')])))
 
     # 加载(用户信息)数据，处理成(用户ID-用户类型)
     def load_user_info(self):
@@ -88,14 +83,16 @@ class CourseDataManager:
             self.load_user_course_list()
         if self.__user_course_score is None:
             self.load_user_course_score()
+        if self.__user_info is None:
+            self.load_user_info()
         # 根据用户有过选课及浏览记录的课程构造过滤表
         filter_list = self.make_course_filter()
-        # 选取在(用户ID-项目ID-选修课列表)和(用户ID-课程ID-评分)中同时出现的用户ID
+        # 选取在(用户ID-项目ID-选修课列表)和(用户ID-课程ID-评分)和用户信息中同时出现的用户ID
         uid_list = set(self.__user_course_score['userid'].values)
         elective_course_pre_data = []
-        for uid, projectid, course_list in self.__user_course_list:
-            if uid in uid_list:
-                elective_course_pre_data.append((uid, projectid, course_list-filter_list[uid]))
+        for uid, projectid, activiesid, course_package_id, course_list in self.__user_course_list:
+            if uid in uid_list and uid in self.__user_info:
+                elective_course_pre_data.append((uid, projectid, activiesid, course_package_id, course_list-filter_list[uid]))
         return elective_course_pre_data
 
     # 构造冷启动用户选修课的预测数据，形如(用户ID-课程列表)
@@ -104,12 +101,14 @@ class CourseDataManager:
             self.load_user_course_list()
         if self.__user_course_score is None:
             self.load_user_course_score()
-        # 选取在(用户ID-项目ID-选修课列表)中出现 但在(用户ID-课程ID-评分)中未出现的用户
+        if self.__user_info is None:
+            self.load_user_info()
+        # 选取在(用户ID-项目ID-选修课列表)和用户信息中出现 但在(用户ID-课程ID-评分)中未出现的用户
         uid_list = set(self.__user_course_score['userid'].values)
         cold_elective_course_pre_data = []
-        for uid, projectid, course_list in self.__user_course_list:
-            if uid not in uid_list:
-                cold_elective_course_pre_data.append((uid, projectid, course_list))
+        for uid, projectid, activiesid, course_package_id, course_list in self.__user_course_list:
+            if uid not in uid_list and uid in self.__user_info:
+                cold_elective_course_pre_data.append((uid, projectid, activiesid, course_package_id, course_list))
         return cold_elective_course_pre_data
 
     # 构造普通用户开放课程的预测数据，形如(用户ID-项目ID-课程列表)
@@ -131,7 +130,7 @@ class CourseDataManager:
                     candidate_list = pid_class_course_list[user_msg]
                     candidate_list = list(candidate_list - filter_list[uid])
                     if len(candidate_list) > 0:
-                        open_course_pre_data.append((uid, projectid, candidate_list))
+                        open_course_pre_data.append((uid, projectid, "", "", candidate_list))
         return open_course_pre_data
 
     # 构造冷启动用户开放课程预测数据，形如(用户ID-项目ID-课程列表)
@@ -160,7 +159,7 @@ class CourseDataManager:
         time = db_data.get_time_from_db(table_name=rs_set.USER_COURSE_INFO_TABLE, colum_name='e_date')
         save_data = []
         uid_list = set()
-        for uid, projectid, course_socre_list in data:
+        for uid, projectid, _, _, course_socre_list in data:
             if len(course_socre_list) > 0:
                 uid_list.add(uid)
                 tmp_ssc_sc = self.__user_info[uid].split('-')[0].split('*')
@@ -170,7 +169,7 @@ class CourseDataManager:
                 min_score = min(course_socre_list, key=lambda k: k[1])[1]
                 for courseid, score in course_socre_list:
                     save_data.append((uid, courseid, sc, ssc, projectid, time,
-                                      round((rs_set.MAX_SCORE-rs_set.MIN_SCORE)*(score-min_score)/(max_score - min_score+1e-10)+rs_set.MIN_SCORE)))
+                                      (rs_set.MAX_SCORE-rs_set.MIN_SCORE)*(score-min_score)/(max_score - min_score+1e-10)+rs_set.MIN_SCORE))
         # 将数据保存到当周推荐数据表
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
@@ -191,22 +190,17 @@ class CourseDataManager:
 
     # 保存选修课推荐结果到数据库
     def save_elective_course_data_to_db(self, data):
-        if self.__user_project_ac_id is None:
-            self.load_user_course_list()
         time = db_data.get_time_from_db(table_name=rs_set.USER_COURSE_INFO_TABLE, colum_name='e_date')
         save_data = []
         uid_list = set()
-        for uid, projectid, course_socre_list in data:
+        for uid, projectid, activiesid, course_package_id, course_socre_list, in data:
             if len(course_socre_list) > 0:
                 uid_list.add(uid)
-                tmp_id = self.__user_project_ac_id[str(int(uid))+'-'+str(int(projectid))].split('-')
-                activiesid = tmp_id[0]
-                course_package_id = tmp_id[1]
                 max_score = max(course_socre_list, key=lambda k: k[1])[1]
                 min_score = min(course_socre_list, key=lambda k: k[1])[1]
                 for courseid, score in course_socre_list:
                     save_data.append((uid, courseid, activiesid, course_package_id, projectid, time,
-                                      round((rs_set.MAX_SCORE-rs_set.MIN_SCORE)*(score-min_score)/(max_score - min_score+1e-10)+rs_set.MIN_SCORE)))
+                                      (rs_set.MAX_SCORE-rs_set.MIN_SCORE)*(score-min_score)/(max_score - min_score+1e-10)+rs_set.MIN_SCORE))
         # 将数据保存到当周推荐数据表
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'courseid', 'activiesid', 'course_package_id', 'projectid', 'dt',
@@ -247,7 +241,7 @@ class CourseDataManager:
         for uid, pid, iid in self.__user_course_score[['userid', 'projectid', 'courseid']].itertuples(
                 index=False):
             if uid in self.__user_info:
-                user_msg = str(projectid) + '*' + self.__user_info[uid].split('-')[0]
+                user_msg = str(pid) + '*' + self.__user_info[uid].split('-')[0]
                 pid_class_course_list[user_msg].add(iid)
         return pid_class_course_list
 

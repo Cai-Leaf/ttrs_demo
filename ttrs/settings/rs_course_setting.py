@@ -47,13 +47,16 @@ userid_courseid_score_sql = """SELECT userid, courseid, projectid, (1+(browse_ti
     .format(user_course_info=USER_COURSE_INFO_TABLE)
 
 # 用户ID-课程列表
+# userid_courselist = """SELECT userid, projectid, activiesid, course_package_id, course_list
+#                        FROM {project_activies_course}
+#                        WHERE userid in (
+#                            SELECT DISTINCT userid
+#                            FROM {user_info}
+#                        )"""\
+#     .format(user_info=USER_INFO_TABLE, project_activies_course=PROJECT_ACTIVISE_COURSE)
 userid_courselist = """SELECT userid, projectid, activiesid, course_package_id, course_list
-                       FROM {project_activies_course}
-                       WHERE userid in (
-                           SELECT DISTINCT userid
-                           FROM {user_info}
-                       )"""\
-    .format(user_info=USER_INFO_TABLE, project_activies_course=PROJECT_ACTIVISE_COURSE)
+                       FROM {project_activies_course}"""\
+    .format(project_activies_course=PROJECT_ACTIVISE_COURSE)
 
 # 用户信息
 user_info = """SELECT userid, projectid, age, gender, schoolstagecode, subjectcode FROM {user_info}"""\
