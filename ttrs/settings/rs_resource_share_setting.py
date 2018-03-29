@@ -7,9 +7,9 @@
 VERBOSE = True
 
 # 类别模型推荐物品数
-MODEL1_RECOMMEND_NUM = 5
+MODEL1_RECOMMEND_NUM = 3
 # 协同过滤模型推荐物品数
-MODEL2_RECOMMEND_NUM = 5
+MODEL2_RECOMMEND_NUM = 3
 
 # 推荐结果中推荐度的最大值和最小值
 MAX_SCORE = 100
@@ -65,7 +65,7 @@ item_score_sql = """SELECT resourceid, projectid, resourcetype, ({download_weigh
                         IF(dz_count > {max_good_count}, {max_good_count}, dz_count) AS z,    
                         IF(pl_count > 5, 5, pl_count) AS s
                         FROM (
-                                SELECT resourceid, projectid, resourcetype, COUNT(xz_count) as xz_count, COUNT(ll_count) as ll_count, COUNT(dz_count) as dz_count, MAX(pl_count) as pl_count
+                                SELECT resourceid, projectid, resourcetype, SUM(xz_count) as xz_count, SUM(ll_count) as ll_count, SUM(dz_count) as dz_count, MAX(pl_count) as pl_count
                                 FROM {item_msg_table}
                                 GROUP BY resourceid, projectid
                               ) AS t2

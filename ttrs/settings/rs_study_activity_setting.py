@@ -7,7 +7,7 @@
 VERBOSE = True
 
 # 推荐物品数
-RECOMMEND_NUM = 10
+RECOMMEND_NUM = 5
 # 推荐新物品数
 RECOMMEND_NEW_NUM = 3
 

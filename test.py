@@ -8,6 +8,7 @@ import heapq
 import pandas as pd
 from ttrs.recommend_resource_share.model import ItemCollaborativeFiltering
 from numpy.random import rand
+from ttrs.utils.db_data import *
 
 
 # a = 30
@@ -33,28 +34,42 @@ from numpy.random import rand
 # print(model.estimate(0, 3))
 from sklearn.feature_extraction.text import CountVectorizer
 # 语料
-corpus = [
-    "我 啊 呵呵 么么哒 什么",
-    "你 啊 呵呵 高效 什么",
-    "你 名 呵呵 高效 不知道",
-    "它 时 呵呵 道理 不知道"
-    ]*100
-# 将文本中的词语转换为词频矩阵
-vectorizer = CountVectorizer()
-# 计算个词语出现的次数
-X = vectorizer.fit_transform(corpus)
-# 获取词袋中所有文本关键词
-word = vectorizer.get_feature_names()
+# corpus = [
+#     "我 啊 呵呵 么么哒 什么",
+#     "你 啊 呵呵 高效 什么",
+#     "你 名 呵呵 高效 不知道",
+#     "你 名 呵呵 高效 不知道",
+#     "它 时 呵呵 道理 不知道"
+#     ]*400
+# # 将文本中的词语转换为词频矩阵
+# vectorizer = CountVectorizer()
+# # 计算个词语出现的次数
+# X = vectorizer.fit_transform(corpus)
+# # 获取词袋中所有文本关键词
+# word = vectorizer.get_feature_names()
+#
+#
+# from sklearn.feature_extraction.text import TfidfTransformer
+# from sklearn.metrics.pairwise import cosine_similarity
+#
+# # 类调用
+# transformer = TfidfTransformer()
+# # 将词频矩阵X统计成TF-IDF值
+# tfidf = transformer.fit_transform(X)
+# # 查看数据结构 tfidf[i][j]表示i类文本中的tf-idf权重
+# aaa = cosine_similarity(tfidf)
+# print(aaa)
+# print(aaa)
 
-
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-
-# 类调用
-transformer = TfidfTransformer()
-# 将词频矩阵X统计成TF-IDF值
-tfidf = transformer.fit_transform(X)
-# 查看数据结构 tfidf[i][j]表示i类文本中的tf-idf权重
-aaa = cosine_similarity(tfidf[[0, 3, 5, 6]])
-print(aaa)
-
+# aaa = get_time_from_db("ts502", "e_date")
+# print(aaa)
+K = 2
+a = np.array([
+    [0, 8, 2, 4, 5, 8, 8, 0, 4, 2],
+    [0, 8, 3, 4, 5, 8, 6, 0, 4, 2],
+    [0, 8, 0, 4, 5, 8, 8, 0, 4, 2],
+])
+print(0.5*a+2.5*a)
+a = a[0]
+print(a[np.argpartition(a, -K)[-K:]])
+print(a[0])

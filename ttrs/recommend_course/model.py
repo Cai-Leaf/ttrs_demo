@@ -8,6 +8,7 @@ from collections import defaultdict
 
 class UserCourseSVD:
     def __init__(self):
+        # n_factors = 32, n_epochs = 20
         self.__model = SVD(n_factors=32, n_epochs=20)
 
     def fit(self, user_course_score):

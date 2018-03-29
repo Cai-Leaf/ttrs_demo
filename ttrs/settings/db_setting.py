@@ -10,7 +10,7 @@ R_USER = 'root'
 # Mysql密码
 R_PASSWORD = '123456'
 # Mysql数据库名
-R_DATABASE = 'new_tt_data'
+R_DATABASE = 'tt_nov'
 # 字符编码
 R_CHARSET = 'utf8'
 

@@ -4,7 +4,7 @@ import time
 from ttrs.recommend_note_share.model import *
 
 # 打开数据库连接
-db = MySQLdb.connect(host='localhost', user='root', password='123456', database='new_tt_data', charset='utf8')
+db = MySQLdb.connect(host='localhost', user='root', password='123456', database='tt_nov', charset='utf8')
 cursor = db.cursor()
 
 try:
@@ -29,7 +29,7 @@ model = ContentSimilarityModel()
 start = time.time()
 model.fit(data)
 print(time.time()-start)
-aaa = model.estimate(438, 889714, [876686, 928605, 852702, 852737, 856100, 868178, 874231])
+
 
 
 

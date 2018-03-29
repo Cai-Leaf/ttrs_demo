@@ -50,7 +50,7 @@ class MixedCollaborativeFiltering:
     def predict(self, user_itemlist, item_score):
         result = []
         for uid, candidate_list, new_item_list in user_itemlist:
-            score = [(iid, self.estimate(uid, iid)) for iid in candidate_list]
+            score = self.batch_estimate(uid, candidate_list)
             score = heapq.nlargest(RECOMMEND_NUM, score, key=lambda k: k[1])
             new_score = [(iid, self.estimate_use_content_sim(uid, iid)) for iid in new_item_list]
             new_score = heapq.nlargest(RECOMMEND_NEW_NUM, new_score, key=lambda k: k[1])
@@ -78,6 +78,33 @@ class MixedCollaborativeFiltering:
         neighbor_sim = heapq.nlargest(self.n_neighbor, neighbor_sim)
         est = np.sum(neighbor_sim)/i_n
         return est
+
+    def batch_estimate(self, u, i_list):
+        if u not in self.inner_uid:
+            return []
+        uid = self.inner_uid[u]
+        real_iid = []
+        real_inner_iid = []
+        for i in i_list:
+            if i in self.inner_iid:
+                real_iid.append(i)
+                real_inner_iid.append(self.inner_iid[i])
+        i_n = len(self.user_itemlist[uid])
+        iid_list = self.user_itemlist[uid]
+        a = 1 / (1 + exp(-(i_n - 5)))
+        neighbor_sim = a * self.sim[real_inner_iid][:, iid_list] + (1 - a) * self.content_sim[real_inner_iid][:, iid_list]
+        if i_n < self.n_neighbor:
+            neighbor_sim = np.sum(neighbor_sim, axis=1)/i_n
+            est = [(real_iid[i], neighbor_sim[i]) for i in range(len(real_iid))]
+            return est
+        else:
+            est = []
+            for i in range(len(neighbor_sim)):
+                tmp_score = neighbor_sim[i]
+                tmp_score = np.sum(tmp_score[np.argpartition(tmp_score, -self.n_neighbor)[-self.n_neighbor:]])/self.n_neighbor
+                est.append(tmp_score)
+            est = [(real_iid[i], est[i]) for i in range(len(real_iid))]
+            return est
 
     def estimate_use_content_sim(self, u, i):
         try:
@@ -126,6 +153,23 @@ class MixedCollaborativeFiltering:
         for ciid, content in i_msg_data.itertuples(index=False):
             self.item_content[self.inner_iid[ciid]] = content
         return
+
+    # def old_predict(self, user_itemlist, item_score):
+    #     result = []
+    #     i = 0
+    #     for uid, candidate_list, new_item_list in user_itemlist:
+    #         score = [(iid, self.estimate(uid, iid)) for iid in candidate_list]
+    #         score = heapq.nlargest(RECOMMEND_NUM, score, key=lambda k: k[1])
+    #         new_score = [(iid, self.estimate_use_content_sim(uid, iid)) for iid in new_item_list]
+    #         new_score = heapq.nlargest(RECOMMEND_NEW_NUM, new_score, key=lambda k: k[1])
+    #         # 根据推荐度进行排序
+    #         score = sorted([(iid, item_score[iid]) for iid, _ in score], key=lambda k: k[1], reverse=True)
+    #         # 将新物品随机插入推荐列表1/3到2/3的位置
+    #         for new_item in new_score:
+    #             index = random.randint(len(score) // 3, len(score) // 3 * 2)
+    #             score.insert(index, new_item)
+    #         result.append((uid, score))
+    #     return result
 
 
 class InfoTechColdModel:

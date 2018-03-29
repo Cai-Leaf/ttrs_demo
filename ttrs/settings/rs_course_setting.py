@@ -8,10 +8,10 @@
 VERBOSE = True
 
 # 选修课推荐课程数
-RECOMMEND_COURSE_NUM = 10
+RECOMMEND_COURSE_NUM = 5
 
 # 开放课推荐课程数
-RECOMMEND_OPEN_COURSE_NUM = 10
+RECOMMEND_OPEN_COURSE_NUM = 5
 
 # 推荐度的最大值和最小值
 MAX_SCORE = 100
@@ -43,17 +43,14 @@ PROJECT_ACTIVISE_COURSE = 'ts504'
 userid_courseid_score_sql = """SELECT userid, courseid, projectid, (1+(browse_time/600)*4) AS score
                                FROM (
                                SELECT userid, courseid, projectid, IF(pv=0, 0, IF(duration/pv>600,600,duration/pv)) AS browse_time
-                               FROM {user_course_info}) as t"""\
+                               FROM (
+                                    SELECT userid, courseid, projectid, SUM(pv) as pv, SUM(duration) as duration
+                                    FROM {user_course_info}
+                                    GROUP BY userid, courseid
+                               ) as t ) as t1"""\
     .format(user_course_info=USER_COURSE_INFO_TABLE)
 
 # 用户ID-课程列表
-# userid_courselist = """SELECT userid, projectid, activiesid, course_package_id, course_list
-#                        FROM {project_activies_course}
-#                        WHERE userid in (
-#                            SELECT DISTINCT userid
-#                            FROM {user_info}
-#                        )"""\
-#     .format(user_info=USER_INFO_TABLE, project_activies_course=PROJECT_ACTIVISE_COURSE)
 userid_courselist = """SELECT userid, projectid, activiesid, course_package_id, course_list
                        FROM {project_activies_course}"""\
     .format(project_activies_course=PROJECT_ACTIVISE_COURSE)

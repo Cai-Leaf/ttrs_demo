@@ -90,7 +90,7 @@ class ItemCollaborativeFiltering:
         # 训练子模型
         for pid, mini_train_data in pid_train_data.items():
             mini_iid_num = len(set([iid for _, iid in mini_train_data]))
-            if mini_iid_num >= 5:
+            if 8888 > mini_iid_num >= 5:
                 self.pid_mini_model[pid].fit(mini_train_data)
         return
 

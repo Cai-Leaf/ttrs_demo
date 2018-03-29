@@ -84,18 +84,18 @@ class StudyActivityDataManager:
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=rs_set.RESULT_TABLE, is_truncate=True)
+                                table_name=rs_set.RESULT_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
         # 将数据保存到已完成项目推荐数据表
-        db_data.delete_data_with_userid(list(uid_list), rs_set.STAY_TABLE)
+        db_data.delete_data_with_userid(list(uid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=rs_set.STAY_TABLE, is_truncate=False)
+                                table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         # 将数据保存到历史推荐数据表
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name=rs_set.ALLDATA_TABLE, is_truncate=False)
+                                table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         return
 
     # 获取用户已参与过的活动，构造过滤表

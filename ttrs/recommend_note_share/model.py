@@ -46,7 +46,7 @@ class ContentSimilarityModel:
         # 构造相似度映射矩阵
         self.pid_sim = defaultdict(lambda: ContentSimilarity())
         for pid, iid_list in pid_iid_list.items():
-            if len(iid_list) > 10:
+            if 8888 > len(iid_list) > 10:
                 inner_index = [inner_iid[iid] for iid in iid_list]
                 self.pid_sim[pid].construct_similarity(iid_list, tf_idf[inner_index])
         return

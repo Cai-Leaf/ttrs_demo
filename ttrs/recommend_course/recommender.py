@@ -25,6 +25,7 @@ class CourseRecommender:
         process_shower.show_start_subprocess('预测普通用户选修课评分')
         elective_course_pre_data = data_manager.get_elective_course_pre_data()
         elective_course_result = model.predict(elective_course_pre_data, pre_type='normal', rec_n=RECOMMEND_COURSE_NUM)
+        del elective_course_pre_data
         process_shower.show_end_subprocess()
 
         # 预测冷启动用户选修课评分
@@ -33,12 +34,13 @@ class CourseRecommender:
         elective_cold_model.fit(train_data)
         cold_elective_course_pre_data = data_manager.get_cold_elective_course_pre_data()
         cold_elective_course_result = elective_cold_model.predict(cold_elective_course_pre_data)
+        del cold_elective_course_pre_data
         process_shower.show_end_subprocess()
 
         # 保存选修课推荐结果
         process_shower.show_start_subprocess('保存选修课推荐结果')
         data_manager.save_elective_course_data_to_db(elective_course_result+cold_elective_course_result)
-        del elective_course_result, cold_elective_course_result, cold_elective_course_pre_data
+        del elective_course_result, cold_elective_course_result
         process_shower.show_end_subprocess()
 
         # 预测普通用户开放课程评分

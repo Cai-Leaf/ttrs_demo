@@ -7,7 +7,7 @@
 VERBOSE = True
 
 # 推荐物品数
-RECOMMEND_NUM = 10
+RECOMMEND_NUM = 5
 # 推荐新物品数
 RECOMMEND_NEW_NUM = 3
 
@@ -52,7 +52,9 @@ user_item_data_sql = """SELECT userid, resourceid
     .format(user_item_bd_table=USER_ITEM_BD_TABLE)
 
 # 物品ID-内容
-item_msg_sql = """SELECT shareid, key_type FROM {info_tech_msg_table}""".format(info_tech_msg_table=INFO_TECH_MSG_TABLE)
+item_msg_sql = """SELECT shareid, key_type 
+                  FROM {info_tech_msg_table} 
+                  GROUP BY shareid""".format(info_tech_msg_table=INFO_TECH_MSG_TABLE)
 
 
 # 用户信息
@@ -62,11 +64,14 @@ user_info_sql = """SELECT userid, projectid, age, gender, schoolstagecode, subje
 # 物品ID-推荐度
 item_score_sql = """SELECT shareid, ({download_weight}*t.d/{max_download_count}+{browse_weight}*t.b/{max_browse_count}+{star_weight}*t.s/5) AS score
                     FROM (
-                    SELECT shareid, 
-                    IF(downloadcount > {max_download_count}, {max_download_count}, downloadcount) AS d, 
-                    IF(browsecount > {max_browse_count}, {max_browse_count}, browsecount) AS b,  
-                    IF(star > 5, 5, star) AS s
-                    FROM {info_tech_msg_table}) AS t"""\
+                        SELECT shareid, 
+                        IF(downloadcount > {max_download_count}, {max_download_count}, downloadcount) AS d, 
+                        IF(browsecount > {max_browse_count}, {max_browse_count}, browsecount) AS b,  
+                        IF(star > 5, 5, star) AS s
+                        FROM (
+                        SELECT shareid, SUM(downloadcount) as downloadcount, SUM(browsecount) as browsecount, Max(star) as star
+                        FROM {info_tech_msg_table}
+                        GROUP BY shareid) AS t1 ) AS t"""\
     .format(info_tech_msg_table=INFO_TECH_MSG_TABLE,
             max_download_count=MAX_DOWNLOAD_COUNT, download_weight=DOWNLOAD_COUNT_WEIGHT,
             max_browse_count=MAX_BROWSE_COUNT, browse_weight=BROWSE_COUNT_WEIGHT,
@@ -78,4 +83,5 @@ new_date = datetime.datetime.now() + datetime.timedelta(days=-DAY_NUM)
 new_date = '"' + new_date.strftime('%Y-%m-%d') + '"'
 new_item_id_sql = """SELECT shareid
                      FROM {info_tech_msg_table}
-                     WHERE createtime > {date} """.format(info_tech_msg_table=INFO_TECH_MSG_TABLE, date=new_date)
+                     WHERE createtime > {date} 
+                     GROUP BY shareid""".format(info_tech_msg_table=INFO_TECH_MSG_TABLE, date=new_date)
