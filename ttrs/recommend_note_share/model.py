@@ -1,5 +1,6 @@
 import jieba
 import re
+import heapq
 from collections import defaultdict
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -26,7 +27,7 @@ class ContentSimilarityModel:
         flag_dr = re.compile(flag_word)
         html_dr = re.compile(html_word)
 
-        for iid, pid, content in item_content:
+        for iid, pid, content in item_content.itertuples(index=False):
             pid_iid_list[pid].append(iid)
             inner_iid[iid] = cur_index
             cur_index += 1
@@ -50,6 +51,43 @@ class ContentSimilarityModel:
                 self.pid_sim[pid].construct_similarity(iid_list, tf_idf[inner_index])
         return
 
+    def predict(self, predata, item_score):
+        result = []
+        for uid, pid, near_item, pre_num, candidate_list in predata:
+            result_item = set()
+            for iid in near_item:
+                sim_item = self.estimate(pid, iid, candidate_list)
+                num = pre_num
+                for sim_iid in sim_item:
+                    if sim_iid not in result_item:
+                        result_item.add(sim_iid)
+                        num -= 1
+                    if num <= 0:
+                        break
+            sim_item = [(iid, item_score[iid]) for iid in result_item]
+            sim_item = sorted(sim_item, key=lambda k: k[1], reverse=True)
+            result.append((uid, pid, sim_item))
+        return
+
+    def estimate(self, pid, item_id, candidate_list):
+        if pid not in self.pid_sim:
+            return []
+        content_similarity = self.pid_sim[pid]
+        if item_id not in content_similarity.inner_iid:
+            return []
+        inner_iid_dict = content_similarity.inner_iid
+        real_iid = []
+        inner_iid = []
+        for iid in candidate_list:
+            if iid in inner_iid_dict:
+                real_iid.append(iid)
+                inner_iid.append(inner_iid_dict[iid])
+        score = content_similarity.sim[inner_iid_dict[item_id]][inner_iid]
+        result = [(real_iid[i], score[i]) for i in range(len(real_iid))]
+        result = sorted(result, key=lambda k: k[1], reverse=True)
+        result = [iid for iid, _ in result]
+        return result
+
 
 class ContentSimilarity:
     def __init__(self):
@@ -62,4 +100,21 @@ class ContentSimilarity:
         for i in range(len(iid_list)):
             self.inner_iid[iid_list[i]] = i
         self.sim = cosine_similarity(tfidf)
+        return
+
+
+class NoteShareColdModel:
+    def __init__(self):
+        self.item_score = None
+
+    def fit(self, item_score):
+        self.item_score = item_score
+
+    def predict(self, pre_data):
+        result = []
+        for uid, pid, candidate_list in pre_data:
+            score = [(iid, self.item_score[iid]) for iid in candidate_list]
+            score = heapq.nlargest(10, score, key=lambda k: k[1])
+            score = [iid for iid, _ in score]
+            result.append((uid, pid, score))
         return

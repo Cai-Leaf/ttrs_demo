@@ -2,7 +2,6 @@ from ..utils import db_data
 from collections import defaultdict
 from ..settings import rs_study_activity_setting as rs_set
 import random
-import datetime
 
 
 class StudyActivityDataManager:
@@ -77,9 +76,9 @@ class StudyActivityDataManager:
             if len(item_list) > 0:
                 uid_list.add(uid)
                 item_num = len(item_list)
-                for i in range(item_num-1, -1, -1):
-                    iid = item_list[i]
-                    score = i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/(item_num-1+1e-4)+rs_set.MIN_SCORE
+                for i in range(item_num, 0, -1):
+                    iid = item_list[i-1]
+                    score = i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/item_num+rs_set.MIN_SCORE
                     save_data.append((uid, iid, sc, ssc, pid, time, score))
         # 将数据保存到当周推荐数据表
         db_data.save_data_to_db(save_data,

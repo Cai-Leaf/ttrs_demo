@@ -1,6 +1,7 @@
 from ..utils.process_shower import *
 from .data_center import *
 from .model import *
+from ..settings.rs_resource_share_setting import VERBOSE
 
 
 class ResourceShareRecommender:
@@ -10,7 +11,7 @@ class ResourceShareRecommender:
     def run(self):
         # 初始化组件
         data_manager = ResourceShareDataManager()
-        process_shower = ProcessShower('资源推荐系统', True)
+        process_shower = ProcessShower('资源推荐系统', VERBOSE)
         process_shower.show_start()
 
         # 训练类别预测模型

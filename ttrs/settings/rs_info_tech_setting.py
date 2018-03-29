@@ -28,7 +28,7 @@ BROWSE_COUNT_WEIGHT = 0.3
 # 评星等级
 STAR_WEIGHT = 0.4
 
-# 保存选修课推荐结果的数据库表名
+# 保存推荐结果的数据库表名
 RESULT_TABLE = 'recommend_infor_tech'
 ALLDATA_TABLE = 'alldata_recommend_infor_tech'
 STAY_TABLE = 'stay_recommend_infor_tech'
