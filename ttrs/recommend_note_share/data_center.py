@@ -1,5 +1,6 @@
 from ..utils import db_data
 from collections import defaultdict
+from ..settings import rs_note_share_setting as rs_set
 
 
 class NoteShareDataManager:
@@ -8,13 +9,14 @@ class NoteShareDataManager:
         self.user_projectid_list = None
         self.user_item = None
         self.pid_item_list = None
+        self.item_projectid_score = None
         return
 
     def load_user_info(self):
         if self.user_info is None:
             contain_name = ['userid', 'projectid', 'schoolstagecode', 'subjectcode']
-            data = db_data.read_db_to_df(sql="", contain=contain_name,
-                                         info="", verbose=True)
+            data = db_data.read_db_to_df(sql=rs_set.user_info_sql, contain=contain_name,
+                                         info=rs_set.USER_INFO_TABLE, verbose=rs_set.VERBOSE)
             data = data.fillna({'schoolstagecode': 'NULL', 'subjectcode': 'NULL', 'age': 0, 'gender': 1})
             self.user_info = {}
             self.user_projectid_list = defaultdict(set)
@@ -27,30 +29,47 @@ class NoteShareDataManager:
 
     def load_user_item(self):
         if self.user_item is None:
-            self.user_item = db_data.read_db_to_df(sql="", contain=['userid', 'projectid', 'itemid'],
-                                                   info="", verbose=True)
+            self.user_item = db_data.read_db_to_df(sql=rs_set.user_item_sql, contain=['userid', 'projectid', 'itemid'],
+                                                   info=rs_set.USER_ITEM_TABLE, verbose=rs_set.VERBOSE)
         return
 
+    def load_user_near_item(self):
+        data = db_data.read_db_to_df(sql=rs_set.user_near_item_sql, contain=['userid', 'projectid', 'itemid'],
+                                     info=rs_set.USER_ITEM_TABLE, verbose=rs_set.VERBOSE)
+        return data
+
     def load_content_train_data(self):
-        result = db_data.read_db_to_df(sql="",
-                                       contain=['itemid', 'projectid', 'content'],
-                                       info="",
-                                       verbose=True)
+        result = db_data.read_db_to_df(sql=rs_set.item_content_sql, contain=['itemid', 'projectid', 'content'],
+                                       info=rs_set.ITEM_MSG_TABEL, verbose=rs_set.VERBOSE)
         if self.pid_item_list is None:
             self.pid_item_list = defaultdict(set)
             for iid, pid, _ in result.itertuples(index=False):
                 self.pid_item_list[pid].add(iid)
         return result
 
+    def load_item_projectid_score(self):
+        if self.item_projectid_score is None:
+            self.item_projectid_score = db_data.read_db_to_df(sql=rs_set.item_score_sql, contain=['itemid', 'projectid', 'score'],
+                                                              info=rs_set.ITEM_MSG_TABEL, verbose=rs_set.VERBOSE)
+        return
+
+    def get_user_item(self):
+        if self.user_item is None:
+            self.load_user_item()
+        return self.user_item
+
     def get_item_score(self):
-        data = db_data.read_db_to_df(sql="",
-                                     contain=['itemid', 'score'],
-                                     info="",
-                                     verbose=True)
+        if self.item_projectid_score is None:
+            self.load_item_projectid_score()
         item_score = defaultdict(float)
-        for iid, score in data.itertuples(index=False):
+        for iid, _, score in self.item_projectid_score.itertuples(index=False):
             item_score[iid] = score
         return item_score
+
+    def get_item_projectid_score(self):
+        if self.item_projectid_score is None:
+            self.load_item_projectid_score()
+        return self.item_projectid_score
 
     # 选取在用户信息表和（用户-物品）表都出现的用户
     def get_pre_data(self):
@@ -69,8 +88,11 @@ class NoteShareDataManager:
                 for pid in self.user_projectid_list[uid]:
                     candidate_list = self.pid_item_list[pid]
                     near_item = user_near_item[str(uid)+'-'+str(pid)]
-                    candidate_list = list(candidate_list - near_item)
-                    pre_num = 10//len(near_item)
+                    candidate_list = candidate_list - near_item
+                    if len(near_item) > 0:
+                        pre_num = max(rs_set.CONTENT_RECOMMEND_NUM//len(near_item), 1)
+                    else:
+                        pre_num = 0
                     if len(candidate_list) > 0:
                         pre_data.append((uid, pid, near_item, pre_num, candidate_list))
         return pre_data
@@ -81,21 +103,18 @@ class NoteShareDataManager:
             self.load_user_info()
         if self.user_item is None:
             self.load_user_item()
-        if self.pid_item_list is None:
-            self.load_content_train_data()
         uid_set = set(self.user_item['userid'].values)
         cold_pre_data = []
         for uid, pid_list in self.user_projectid_list.items():
-            if uid in uid_set:
+            if uid not in uid_set:
                 for pid in pid_list:
-                    candidate_list = self.pid_item_list[pid]
-                    cold_pre_data.append((uid, pid, candidate_list))
+                    cold_pre_data.append((uid, pid))
         return cold_pre_data
 
     def save_to_db(self, data):
         if self.user_info is None:
             self.load_user_info()
-        time = db_data.get_time_from_db(table_name="", colum_name='dt')
+        time = db_data.get_time_from_db(table_name=rs_set.USER_ITEM_TABLE, colum_name='dt')
         save_data = []
         uid_list = set()
         for uid, pid, item_list in data:
@@ -113,24 +132,23 @@ class NoteShareDataManager:
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name="", is_truncate=True, verbose=True)
+                                table_name=rs_set.RESULT_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
         # 将数据保存到已完成项目推荐数据表
-        db_data.delete_data_with_userid(list(uid_list), "")
+        db_data.delete_data_with_userid(list(uid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name="", is_truncate=False, verbose=True)
+                                table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         # 将数据保存到历史推荐数据表
         db_data.save_data_to_db(save_data,
                                 contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                          'recommendation_index'],
-                                table_name="", is_truncate=False, verbose=True)
+                                table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         return
 
     def get_user_near_item(self):
-        if self.user_item is None:
-            self.load_user_item()
+        user_item = self.load_user_near_item()
         user_near_item = defaultdict(set)
-        for uid, pid, iid in self.user_item.itertuples(index=False):
+        for uid, pid, iid in user_item.itertuples(index=False):
             user_near_item[str(uid)+'-'+str(pid)].add(iid)
         return user_near_item

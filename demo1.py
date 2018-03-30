@@ -2,6 +2,7 @@ from ttrs.recommend_course.recommender import *
 from ttrs.recommend_info_tech.recommender import *
 from ttrs.recommend_study_activity.recommender import *
 from ttrs.recommend_resource_share.recommender import *
+from ttrs.recommend_note_share.recommender import *
 
 # 运行课程推荐系统
 # recommender = CourseRecommender()
@@ -16,7 +17,11 @@ from ttrs.recommend_resource_share.recommender import *
 # recommender.run()
 
 # 运行资源推荐系统
-recommender = ResourceShareRecommender()
+# recommender = ResourceShareRecommender()
+# recommender.run()
+
+# 运行研修日志推荐系统
+recommender = NoteShareRecommender()
 recommender.run()
 
 

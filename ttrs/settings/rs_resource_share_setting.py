@@ -74,6 +74,6 @@ item_score_sql = """SELECT resourceid, projectid, resourcetype, ({download_weigh
     .format(item_msg_table=ITEM_MSG_TABEL, user_info_table=USER_INFO_TABLE,
             max_download_count=MAX_DOWNLOAD_COUNT, download_weight=DOWNLOAD_COUNT_WEIGHT,
             max_browse_count=MAX_BROWSE_COUNT, browse_weight=BROWSE_COUNT_WEIGHT,
-            max_good_count=MAX_BROWSE_COUNT, good_weight=BROWSE_COUNT_WEIGHT,
+            max_good_count=MAX_GOOD_COUNT, good_weight=GOOD_COUNT_WEIGHT,
             star_weight=STAR_WEIGHT)
 

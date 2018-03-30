@@ -38,7 +38,7 @@ def get_time_from_db(table_name, colum_name, verbose=True):
     result = datetime.datetime.now().strftime('%Y-%m-%d')
     try:
         # 执行SQL语句
-        sql = 'SELECT {column} FROM {table} LIMIT 1'.format(table=table_name, column=colum_name)
+        sql = 'SELECT MAX({column}) AS time FROM {table}'.format(table=table_name, column=colum_name)
         cursor.execute(sql)
         # 获取所有记录列表
         db_data = cursor.fetchall()
