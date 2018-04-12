@@ -34,28 +34,28 @@ from ttrs.utils.db_data import *
 # print(model.estimate(0, 3))
 from sklearn.feature_extraction.text import CountVectorizer
 # 语料
-# corpus = [
-#     "我 啊 呵呵 么么哒 什么",
-#     "你 啊 呵呵 高效 什么",
-#     "你 名 呵呵 高效 不知道",
-#     "你 名 呵呵 高效 不知道",
-#     "它 时 呵呵 道理 不知道"
-#     ]*400
-# # 将文本中的词语转换为词频矩阵
-# vectorizer = CountVectorizer()
-# # 计算个词语出现的次数
-# X = vectorizer.fit_transform(corpus)
-# # 获取词袋中所有文本关键词
-# word = vectorizer.get_feature_names()
-#
-#
-# from sklearn.feature_extraction.text import TfidfTransformer
-# from sklearn.metrics.pairwise import cosine_similarity
-#
-# # 类调用
-# transformer = TfidfTransformer()
-# # 将词频矩阵X统计成TF-IDF值
-# tfidf = transformer.fit_transform(X)
+corpus = [
+    "我 啊 呵呵 么么哒 什么",
+    "你 啊 呵呵 高效 什么",
+    "你 名 呵呵 高效 不知道",
+    "你 名 呵呵 高效 不知道",
+    "它 时 呵呵 道理 不知道"
+    ]*400
+# 将文本中的词语转换为词频矩阵
+vectorizer = CountVectorizer()
+# 计算个词语出现的次数
+X = vectorizer.fit_transform(corpus)
+# 获取词袋中所有文本关键词
+word = vectorizer.get_feature_names()
+
+
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# 类调用
+transformer = TfidfTransformer()
+# 将词频矩阵X统计成TF-IDF值
+tfidf = transformer.fit_transform(X)
 # # 查看数据结构 tfidf[i][j]表示i类文本中的tf-idf权重
 # aaa = cosine_similarity(tfidf)
 # print(aaa)
