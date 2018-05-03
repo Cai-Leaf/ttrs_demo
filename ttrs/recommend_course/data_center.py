@@ -156,7 +156,7 @@ class CourseDataManager:
     def save_open_course_data_to_db(self, data):
         if self.__user_info is None:
             self.load_user_info()
-        time = db_data.get_time_from_db(table_name=rs_set.USER_COURSE_INFO_TABLE, colum_name='e_date', verbose=rs_set.VERBOSE)
+        time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
         save_data = []
         uid_list = set()
         for uid, projectid, _, _, course_socre_list in data:
@@ -190,7 +190,7 @@ class CourseDataManager:
 
     # 保存选修课推荐结果到数据库
     def save_elective_course_data_to_db(self, data):
-        time = db_data.get_time_from_db(table_name=rs_set.USER_COURSE_INFO_TABLE, colum_name='e_date')
+        time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
         save_data = []
         uid_list = set()
         for uid, projectid, activiesid, course_package_id, course_socre_list, in data:

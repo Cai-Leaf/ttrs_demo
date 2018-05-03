@@ -37,10 +37,10 @@ STAY_TABLE = 'stay_recommend_resource_share'
 # 项目-用户信息表
 USER_INFO_TABLE = 'ts501'
 
-# 资源分享信息表
+# 资源分享基本信息表
 ITEM_MSG_TABEL = 'ts511'
 
-# 资源-用户行为
+# 资源分享-用户行为
 USER_ITEM_TABLE = 'ts512'
 
 

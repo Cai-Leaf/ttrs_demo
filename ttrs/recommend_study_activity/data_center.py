@@ -69,7 +69,7 @@ class StudyActivityDataManager:
         return pre_data
 
     def save_to_db(self, data):
-        time = db_data.get_time_from_db(table_name=rs_set.USER_ACTIVITY_TABLE, colum_name='dt')
+        time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
         save_data = []
         uid_list = set()
         for uid, pid, ssc, sc, item_list in data:

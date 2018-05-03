@@ -152,7 +152,7 @@ class InfoTechDataManager:
     def save_to_db(self, data):
         if self.__user_info is None:
             self.load_user_info()
-        time = db_data.get_time_from_db(table_name=rs_set.USER_ITEM_BD_TABLE, colum_name='dt')
+        time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
         save_data = []
         uid_list = set()
         for uid, item_list in data:
