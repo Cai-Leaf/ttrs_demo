@@ -1,6 +1,7 @@
 from ..utils import db_data
 from collections import defaultdict
 from ..settings import rs_study_activity_setting as rs_set
+from datetime import datetime, timedelta
 import random
 
 
@@ -50,6 +51,18 @@ class StudyActivityDataManager:
             new_item_list[str(pid) + '-' + ssc + '-' + sc].add(iid)
         return new_item_list
 
+    # 获取下周会关闭的项目id
+    def get_close_project(self):
+        close_project = db_data.read_db_to_df(sql=rs_set.project_id_close_sql,
+                                              contain=['projectid', 'close_date'],
+                                              info=rs_set.USER_INFO_TABLE, verbose=rs_set.VERBOSE)
+        now = datetime.now()
+        result = set()
+        for pid, date in close_project.itertuples(index=False):
+            if now + timedelta(days=7) > date.to_pydatetime():
+                result.add(pid)
+        return result
+
     # 获取预测数据
     def get_pre_data(self):
         # 获取用户信息，过滤表，候选推荐表，新物品表
@@ -70,7 +83,9 @@ class StudyActivityDataManager:
 
     def save_to_db(self, data):
         time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
+        close_project = self.get_close_project()
         save_data = []
+        stay_data = []
         uid_list = set()
         for uid, pid, ssc, sc, item_list in data:
             if len(item_list) > 0:
@@ -80,22 +95,28 @@ class StudyActivityDataManager:
                     iid = item_list[i-1]
                     score = i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/item_num+rs_set.MIN_SCORE
                     save_data.append((uid, iid, sc, ssc, pid, time, score))
+                    if pid in close_project:
+                        stay_data.append((uid, iid, sc, ssc, pid, time, score))
+
         # 将数据保存到当周推荐数据表
-        db_data.save_data_to_db(save_data,
-                                contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
-                                         'recommendation_index'],
-                                table_name=rs_set.RESULT_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
-        # 将数据保存到已完成项目推荐数据表
-        db_data.delete_data_with_userid(list(uid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
-        db_data.save_data_to_db(save_data,
-                                contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
-                                         'recommendation_index'],
-                                table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        if len(save_data) > 0:
+            db_data.save_data_to_db(save_data,
+                                    contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
+                                             'recommendation_index'],
+                                    table_name=rs_set.RESULT_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
         # 将数据保存到历史推荐数据表
-        db_data.save_data_to_db(save_data,
-                                contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
-                                         'recommendation_index'],
-                                table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        if len(save_data) > 0:
+            db_data.save_data_to_db(save_data,
+                                    contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
+                                             'recommendation_index'],
+                                    table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        del save_data
+        # 将数据保存到已完成项目推荐数据表
+        if len(stay_data) > 0:
+            db_data.save_data_to_db(stay_data,
+                                    contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
+                                             'recommendation_index'],
+                                    table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         return
 
     # 获取用户已参与过的活动，构造过滤表

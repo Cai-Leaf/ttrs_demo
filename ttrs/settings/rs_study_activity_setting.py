@@ -68,3 +68,6 @@ new_item_sql = """SELECT activiesid, projectid, schoolstagecode, subjectcode
           WHERE begindate > {new_date} """\
     .format(activity_msg_table=ACTIVITY_MSG_TABLE,  new_date=new_date)
 
+# 项目-关闭时间表
+project_id_close_sql = "SELECT DISTINCT projectid, close_date FROM {user_info}".format(user_info=USER_INFO_TABLE)
+

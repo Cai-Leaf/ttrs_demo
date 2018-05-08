@@ -85,3 +85,6 @@ new_item_id_sql = """SELECT shareid
                      FROM {info_tech_msg_table}
                      WHERE createtime > {date} 
                      GROUP BY shareid""".format(info_tech_msg_table=INFO_TECH_MSG_TABLE, date=new_date)
+
+# 项目-关闭时间表
+project_id_close_sql = "SELECT DISTINCT projectid, close_date FROM {user_info}".format(user_info=USER_INFO_TABLE)

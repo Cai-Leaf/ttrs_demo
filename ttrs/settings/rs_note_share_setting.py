@@ -121,3 +121,6 @@ item_score_sql = """SELECT blogid, projectid, ({comment_count_weight}*t.p/{max_c
             day_num=DAY_NUM, day_num_weight=DAY_NUM_WEIGHT,
             star_weight=STAR_WEIGHT, date=date)
 
+# 项目-关闭时间表
+project_id_close_sql = "SELECT DISTINCT projectid, close_date FROM {user_info}".format(user_info=USER_INFO_TABLE)
+

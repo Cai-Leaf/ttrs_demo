@@ -58,3 +58,6 @@ userid_courselist = """SELECT userid, projectid, activiesid, course_package_id, 
 # 用户信息
 user_info = """SELECT userid, projectid, age, gender, schoolstagecode, subjectcode FROM {user_info}"""\
     .format(user_info=USER_INFO_TABLE)
+
+# 项目-关闭时间表
+project_id_close_sql = "SELECT DISTINCT projectid, close_date FROM {user_info}".format(user_info=USER_INFO_TABLE)

@@ -77,3 +77,6 @@ item_score_sql = """SELECT resourceid, projectid, resourcetype, ({download_weigh
             max_good_count=MAX_GOOD_COUNT, good_weight=GOOD_COUNT_WEIGHT,
             star_weight=STAR_WEIGHT)
 
+# 项目-关闭时间表
+project_id_close_sql = "SELECT DISTINCT projectid, close_date FROM {user_info}".format(user_info=USER_INFO_TABLE)
+
