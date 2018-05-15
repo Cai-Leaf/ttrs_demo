@@ -22,7 +22,7 @@ W_USER = 'root'
 # Mysql密码
 W_PASSWORD = '123456'
 # Mysql数据库名
-W_DATABASE = 'tt_data'
+W_DATABASE = 'tt_result'
 # 字符编码
 W_CHARSET = 'utf8'
 # 存入数据库时，数据分区大小

@@ -60,4 +60,4 @@ user_info = """SELECT userid, projectid, age, gender, schoolstagecode, subjectco
     .format(user_info=USER_INFO_TABLE)
 
 # 项目-关闭时间表
-project_id_close_sql = "SELECT DISTINCT projectid, close_date FROM {user_info}".format(user_info=USER_INFO_TABLE)
+project_id_close_sql = "SELECT DISTINCT projectid, project_endtime FROM {user_info}".format(user_info=USER_INFO_TABLE)

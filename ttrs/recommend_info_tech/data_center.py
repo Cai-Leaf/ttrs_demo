@@ -165,24 +165,20 @@ class InfoTechDataManager:
         if self.__user_info is None:
             self.load_user_info()
         time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
-        close_project = self.get_close_project()
         save_data = []
-        stay_data = []
-        uid_list = set()
+        pid_list = set()
         for uid, item_list in data:
             if len(item_list) > 0:
-                uid_list.add(uid)
                 tmp_ssc_sc = self.__user_info[uid].split('-')[0].split('*')
                 ssc = tmp_ssc_sc[0]
                 sc = tmp_ssc_sc[1]
                 item_num = len(item_list)
                 for i in range(item_num-1, -1, -1):
                     iid = item_list[i][0]
-                    score = i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/(item_num-1+1e-4)+rs_set.MIN_SCORE
+                    score = round(i*(rs_set.MAX_SCORE-rs_set.MIN_SCORE)/(item_num-1+1e-4)+rs_set.MIN_SCORE, 4)
                     for projectid in self.__user_projectid_list[uid]:
+                        pid_list.add(projectid)
                         save_data.append((uid, iid, sc, ssc, projectid, time, score))
-                        if projectid in close_project:
-                            stay_data.append((uid, iid, sc, ssc, projectid, time, score))
         # 将数据保存到当周推荐数据表
         if len(save_data) > 0:
             db_data.save_data_to_db(save_data,
@@ -196,8 +192,9 @@ class InfoTechDataManager:
                                              'recommendation_index'],
                                     table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         # 将数据保存到已完成项目推荐数据表
-        if len(stay_data) > 0:
-            db_data.save_data_to_db(stay_data,
+        if len(save_data) > 0:
+            db_data.delete_data_with_projectid(list(pid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
+            db_data.save_data_to_db(save_data,
                                     contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                              'recommendation_index'],
                                     table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)

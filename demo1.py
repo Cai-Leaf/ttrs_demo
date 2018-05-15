@@ -9,20 +9,20 @@ recommender = CourseRecommender()
 recommender.run()
 
 # 运行信息技术技巧大全推荐系统
-# recommender = InfoTechRecommender()
-# recommender.run()
+recommender = InfoTechRecommender()
+recommender.run()
 
 # 运行研修活动推荐系统
-# recommender = StudyActivityRecommender()
-# recommender.run()
+recommender = StudyActivityRecommender()
+recommender.run()
 
 # 运行资源推荐系统
-# recommender = ResourceShareRecommender()
-# recommender.run()
+recommender = ResourceShareRecommender()
+recommender.run()
 
 # 运行研修日志推荐系统
-# recommender = NoteShareRecommender()
-# recommender.run()
+recommender = NoteShareRecommender()
+recommender.run()
 
 
 

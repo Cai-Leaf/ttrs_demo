@@ -76,7 +76,8 @@ def save_data_to_db(data, table_name, contain, is_truncate=False, verbose=True):
             cursor.execute('TRUNCATE TABLE '+table_name)
         for i in range(bach_num):
             sql_1 = 'INSERT INTO ' + table_name + ' (' + ','.join(contain) + ') ' + 'VALUES ' + \
-                    ','.join(['(' + ','.join(['\'' + str(i) + '\'' for i in item]) + ')' for item in data[i*bach_size:(i+1)*bach_size]])
+                    ','.join(['(' + ','.join(['\'' + str(i) + '\'' for i in item]) + ')' for item in
+                              data[i * bach_size:(i + 1) * bach_size]])
             cursor.execute(sql_1)
         # 提交到数据库执行
         db.commit()
@@ -126,27 +127,30 @@ def delete_data_with_userid(uid_list, table_name, verbose=True):
     return
 
 
-def delete_data_with_userid_projectid(uid_pid_list, table_name, verbose=True):
-    if len(uid_pid_list) == 0:
+# 根据projectid删除数据库的内容
+def delete_data_with_projectid(pid_list, table_name, verbose=True):
+    if len(pid_list) == 0:
         if verbose:
             print(table_name, "没有删除任何数据")
         return
     db = MySQLdb.connect(host=W_HOST, user=W_USER, password=W_PASSWORD, database=W_DATABASE, charset=W_CHARSET)
+    bach_size = MAX_SAVE_DATA_BACH_SIZE
+    bach_num = round(len(pid_list) / bach_size)
+    if bach_num == 0:
+        bach_num = 1
     cursor = db.cursor()
     start = time.time()
-    print(len(uid_pid_list))
     try:
         # 执行sql语句
-        for uid, pid in uid_pid_list:
-            sql = 'DELETE FROM {table_name}  WHERE userid = {uid} AND projectid = {pid}'.\
-                format(table_name=table_name, uid=uid, pid=pid)
+        for i in range(bach_num):
+            sql = 'DELETE FROM ' + table_name + ' WHERE projectid IN (' + ','.join([str(i) for i in pid_list[i*bach_size:(i+1)*bach_size]]) + ')'
             cursor.execute(sql)
         # 提交到数据库执行
         db.commit()
     except:
         # 回滚数据
         db.rollback()
-        raise IOError('写数据库出错')
+        raise IOError(table_name, '删除数据库出错')
     finally:
         db.close()
     if verbose:
