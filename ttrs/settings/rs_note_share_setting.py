@@ -81,10 +81,9 @@ user_near_item_sql = """SELECT userid, projectid, blogid
     .format(user_item_table=USER_ITEM_TABLE, user_info_table=USER_INFO_TABLE, browse_num=CONTENT_RECOMMEND_NUM)
 
 # 物品ID-项目ID-内容
-item_content_sql = """SELECT blogid, projectid, content
+item_content_sql = """SELECT DISTINCT blogid, projectid, content
                       FROM {item_msg_table}
-                      WHERE projectid IN (SELECT DISTINCT projectid FROM {user_info_table})
-                      GROUP BY blogid, projectid"""\
+                      WHERE projectid IN (SELECT DISTINCT projectid FROM {user_info_table})"""\
     .format(item_msg_table=ITEM_MSG_TABEL, user_info_table=USER_INFO_TABLE)
 
 # 物品ID-推荐度

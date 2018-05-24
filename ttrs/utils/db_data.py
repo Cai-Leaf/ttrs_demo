@@ -74,6 +74,7 @@ def save_data_to_db(data, table_name, contain, is_truncate=False, verbose=True):
         # 执行sql语句
         if is_truncate:
             cursor.execute('TRUNCATE TABLE '+table_name)
+            db.commit()
         for i in range(bach_num):
             sql_1 = 'INSERT INTO ' + table_name + ' (' + ','.join(contain) + ') ' + 'VALUES ' + \
                     ','.join(['(' + ','.join(['\'' + str(i) + '\'' for i in item]) + ')' for item in

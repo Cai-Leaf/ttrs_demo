@@ -128,7 +128,9 @@ class NoteShareDataManager:
         if self.user_info is None:
             self.load_user_info()
         time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
+        close_project = self.get_close_project()
         save_data = []
+        stay_data = []
         pid_list = set()
         for uid, pid, item_list in data:
             if len(item_list) > 0:
@@ -139,9 +141,10 @@ class NoteShareDataManager:
                 item_num = len(item_list)
                 for i in range(item_num, 0, -1):
                     iid = item_list[i-1]
-                    score = round(i*(100-80)/item_num+80, 4)
+                    score = round(i * (100 - 80) / item_num + 80, 4)
                     save_data.append((uid, iid, sc, ssc, pid, time, score))
-
+                    if pid in close_project:
+                        stay_data.append((uid, iid, sc, ssc, pid, time, score))
         # 将数据保存到当周推荐数据表
         if len(save_data) > 0:
             db_data.save_data_to_db(save_data,
@@ -154,10 +157,11 @@ class NoteShareDataManager:
                                     contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                              'recommendation_index'],
                                     table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        del save_data
         # 将数据保存到已完成项目推荐数据表
-        if len(save_data) > 0:
+        if len(stay_data) > 0:
             db_data.delete_data_with_projectid(list(pid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
-            db_data.save_data_to_db(save_data,
+            db_data.save_data_to_db(stay_data,
                                     contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                              'recommendation_index'],
                                     table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
