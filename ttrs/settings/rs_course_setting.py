@@ -14,7 +14,7 @@ RECOMMEND_COURSE_NUM = 5
 RECOMMEND_OPEN_COURSE_NUM = 5
 
 # 推荐度的最大值和最小值
-MAX_SCORE = 100
+MAX_SCORE = 99
 MIN_SCORE = 80
 
 # 保存选修课推荐结果的数据库表名

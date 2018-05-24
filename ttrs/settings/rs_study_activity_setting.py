@@ -12,7 +12,7 @@ RECOMMEND_NUM = 5
 RECOMMEND_NEW_NUM = 3
 
 # 推荐结果中推荐度的最大值和最小值
-MAX_SCORE = 100
+MAX_SCORE = 99
 MIN_SCORE = 80
 
 # 设置距今几天的活动参与信息需要纳入计算范围

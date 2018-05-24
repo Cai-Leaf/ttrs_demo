@@ -139,9 +139,9 @@ class NoteShareDataManager:
                 ssc = tmp_ssc_sc[0]
                 sc = tmp_ssc_sc[1]
                 item_num = len(item_list)
-                for i in range(item_num, 0, -1):
-                    iid = item_list[i-1]
-                    score = round(i * (100 - 80) / item_num + 80, 4)
+                for i in range(item_num):
+                    iid = item_list[i]
+                    score = round((item_num - i - 1 + 1e-6) * (rs_set.MAX_SCORE - rs_set.MIN_SCORE) / (item_num - 1 + 1e-6) + rs_set.MIN_SCORE, 4)
                     save_data.append((uid, iid, sc, ssc, pid, time, score))
                     if pid in close_project:
                         stay_data.append((uid, iid, sc, ssc, pid, time, score))
@@ -151,20 +151,20 @@ class NoteShareDataManager:
                                     contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
                                              'recommendation_index'],
                                     table_name=rs_set.RESULT_TABLE, is_truncate=True, verbose=rs_set.VERBOSE)
-        # 将数据保存到历史推荐数据表
-        if len(save_data) > 0:
-            db_data.save_data_to_db(save_data,
-                                    contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
-                                             'recommendation_index'],
-                                    table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
-        del save_data
-        # 将数据保存到已完成项目推荐数据表
-        if len(stay_data) > 0:
-            db_data.delete_data_with_projectid(list(pid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
-            db_data.save_data_to_db(stay_data,
-                                    contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
-                                             'recommendation_index'],
-                                    table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        # # 将数据保存到历史推荐数据表
+        # if len(save_data) > 0:
+        #     db_data.save_data_to_db(save_data,
+        #                             contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
+        #                                      'recommendation_index'],
+        #                             table_name=rs_set.ALLDATA_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
+        # del save_data
+        # # 将数据保存到已完成项目推荐数据表
+        # if len(stay_data) > 0:
+        #     db_data.delete_data_with_projectid(list(pid_list), rs_set.STAY_TABLE, verbose=rs_set.VERBOSE)
+        #     db_data.save_data_to_db(stay_data,
+        #                             contain=['userid', 'resourceid', 'subjectcode', 'schoolstagecode', 'projectid', 'dt',
+        #                                      'recommendation_index'],
+        #                             table_name=rs_set.STAY_TABLE, is_truncate=False, verbose=rs_set.VERBOSE)
         return
 
     def get_user_near_item(self):

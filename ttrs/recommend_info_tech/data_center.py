@@ -175,9 +175,9 @@ class InfoTechDataManager:
                 ssc = tmp_ssc_sc[0]
                 sc = tmp_ssc_sc[1]
                 item_num = len(item_list)
-                for i in range(item_num-1, -1, -1):
+                for i in range(item_num):
                     iid = item_list[i][0]
-                    score = round(i * (rs_set.MAX_SCORE - rs_set.MIN_SCORE) / (item_num - 1 + 1e-4) + rs_set.MIN_SCORE, 4)
+                    score = round((item_num-i-1+1e-6) * (rs_set.MAX_SCORE - rs_set.MIN_SCORE) / (item_num-1+1e-6) + rs_set.MIN_SCORE, 4)
                     for projectid in self.__user_projectid_list[uid]:
                         pid_list.add(projectid)
                         save_data.append((uid, iid, sc, ssc, projectid, time, score))

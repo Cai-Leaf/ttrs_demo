@@ -1,4 +1,5 @@
 import numpy as np
+import heapq
 # import jieba
 # import re
 #
@@ -20,4 +21,8 @@ import numpy as np
 # #
 # print(" ".join([word for word in seg_list if word not in stop_word and len(word) > 1]))
 
+item_num = 4
+for i in range(0, item_num):
+    score = round((item_num-1 - i+1e-6) * (99 - 80) / (item_num-1+1e-6) + 80, 4)
+    print(score)
 

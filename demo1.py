@@ -16,13 +16,13 @@ from ttrs.recommend_note_share.recommender import *
 # recommender = StudyActivityRecommender()
 # recommender.run()
 #
-# 运行资源推荐系统
-recommender = ResourceShareRecommender()
-recommender.run()
-#
-# # 运行研修日志推荐系统
-# recommender = NoteShareRecommender()
+# # 运行资源推荐系统
+# recommender = ResourceShareRecommender()
 # recommender.run()
+#
+# 运行研修日志推荐系统
+recommender = NoteShareRecommender()
+recommender.run()
 
 
 

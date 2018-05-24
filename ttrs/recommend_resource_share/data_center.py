@@ -196,9 +196,9 @@ class ResourceShareDataManager:
                 ssc = tmp_ssc_sc[0]
                 sc = tmp_ssc_sc[1]
                 item_num = len(item_list)
-                for i in range(item_num, 0, -1):
-                    iid = item_list[i-1]
-                    score = round(i * (rs_set.MAX_SCORE - rs_set.MIN_SCORE) / item_num + rs_set.MIN_SCORE, 4)
+                for i in range(item_num):
+                    iid = item_list[i]
+                    score = round((item_num-i-1+1e-6) * (rs_set.MAX_SCORE - rs_set.MIN_SCORE) / (item_num-1+1e-6) + rs_set.MIN_SCORE, 4)
                     save_data.append((uid, iid, sc, ssc, pid, time, score))
                     if pid in close_project:
                         stay_data.append((uid, iid, sc, ssc, pid, time, score))

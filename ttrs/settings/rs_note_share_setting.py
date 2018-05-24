@@ -12,7 +12,7 @@ CONTENT_RECOMMEND_NUM = 5
 CF_RECOMMEND_NUM = 5
 
 # 推荐结果中推荐度的最大值和最小值
-MAX_SCORE = 100
+MAX_SCORE = 99
 MIN_SCORE = 80
 
 # 推荐指数的参数
