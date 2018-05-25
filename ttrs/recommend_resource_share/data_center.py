@@ -57,16 +57,16 @@ class ResourceShareDataManager:
         return
 
     # 获取下周会关闭的项目id
-    def get_close_project(self):
+    def get_close_project(self, check_time):
         close_project = db_data.read_db_to_df(sql=rs_set.project_id_close_sql,
                                               contain=['projectid', 'close_date'],
                                               info=rs_set.USER_INFO_TABLE, verbose=rs_set.VERBOSE)
-        now = datetime.now()
+        check_time = datetime.strptime(check_time, '%Y-%m-%d %H:%M:%S')
         result = set()
         for pid, date in close_project.itertuples(index=False):
-            if now + timedelta(days=7) > date.to_pydatetime():
+            if check_time + timedelta(days=7) >= date.to_pydatetime():
                 result.add(pid)
-        return result
+            return result
 
     def get_user_near_browse(self):
         if self.user_item is None:
@@ -185,7 +185,7 @@ class ResourceShareDataManager:
         if self.user_info is None:
             self.load_user_info()
         time = db_data.get_time_from_db(table_name=rs_set.USER_INFO_TABLE, colum_name='dt', verbose=rs_set.VERBOSE)
-        close_project = self.get_close_project()
+        close_project = self.get_close_project(time)
         save_data = []
         stay_data = []
         pid_list = set()

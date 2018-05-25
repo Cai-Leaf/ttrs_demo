@@ -15,6 +15,9 @@ CF_RECOMMEND_NUM = 5
 MAX_SCORE = 99
 MIN_SCORE = 80
 
+# 用户最近浏览日志的数量
+NEAR_BROWSE_NUM = 5
+
 # 推荐指数的参数
 # 评论次数
 MAX_COMMENT_COUNT = 10
@@ -78,7 +81,7 @@ user_near_item_sql = """SELECT userid, projectid, blogid
                             WHERE b.userid = a.userid AND b.projectid = a.projectid AND b.createtime > a.createtime
                         ) < {browse_num} 
                         ORDER BY userid, projectid"""\
-    .format(user_item_table=USER_ITEM_TABLE, user_info_table=USER_INFO_TABLE, browse_num=CONTENT_RECOMMEND_NUM)
+    .format(user_item_table=USER_ITEM_TABLE, user_info_table=USER_INFO_TABLE, browse_num=NEAR_BROWSE_NUM)
 
 # 物品ID-项目ID-内容
 item_content_sql = """SELECT DISTINCT blogid, projectid, content

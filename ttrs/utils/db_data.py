@@ -35,7 +35,7 @@ def read_db_to_df(sql, contain, info='', verbose=True):
 def get_time_from_db(table_name, colum_name, verbose=True):
     db = MySQLdb.connect(host=R_HOST, user=R_USER, password=R_PASSWORD, database=R_DATABASE, charset=R_CHARSET)
     cursor = db.cursor()
-    result = datetime.datetime.now().strftime('%Y-%m-%d')
+    result = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
         # 执行SQL语句
         sql = 'SELECT MAX({column}) AS time FROM {table}'.format(table=table_name, column=colum_name)
